@@ -262,6 +262,29 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch (`git push origin feature/feature`)
 5. Open a Pull Request
 
+## ⚠️ Disclaimer
+
+**USE AT YOUR OWN RISK.** This software is provided "as is" without warranty of any kind, express or implied. The authors and contributors are not liable for any damages, losses, or issues that may arise from using this software, including but not limited to:
+
+- Loss of funds or digital assets
+- Incorrect transactions or deployments
+- Smart contract errors or vulnerabilities
+- Data loss or corruption
+- Network failures or downtime
+- Any other direct or indirect damages
+
+By using this software, you acknowledge that:
+- You are solely responsible for your actions and transactions
+- You understand the risks involved in DLT operations
+- You will verify all transactions before signing them in your wallet
+- DLT transactions are irreversible once confirmed
+- You should test thoroughly on Stokenet before using Mainnet
+- The software is provided for educational and informational purposes
+
+**Always review transaction manifests carefully before signing. Never share your private keys or seed phrases.**
+
 ## 📄 License
 
 This project is licensed under the MIT License.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
