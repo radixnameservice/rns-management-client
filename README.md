@@ -86,6 +86,30 @@ The optimized build will be created in the `dist/` directory.
 npm run preview
 ```
 
+### Deploying to GitHub Pages
+
+Deploy your application to GitHub Pages with automated GitHub Actions:
+
+```bash
+# Make sure vite.config.js has the correct base path
+# Update base: '/your-repo-name/' to match your repository
+
+# Push to main branch - automatic deployment
+git add .
+git commit -m "Deploy to GitHub Pages"
+git push origin main
+```
+
+Or deploy manually:
+
+```bash
+npm run deploy
+```
+
+**See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.**
+
+Your site will be live at: `https://your-username.github.io/rns-management-client/`
+
 ## 📖 Usage Guide
 
 ### 1. Connect Your Wallet
