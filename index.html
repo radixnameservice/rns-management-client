@@ -1,0 +1,967 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" type="text/css" href="style.css" />
+  <title>RNS V2 Manager</title>
+</head>
+
+<body>
+  <noscript>You need to enable JavaScript to run this app.</noscript>
+
+  <!-- Top Header (Outside Container) -->
+  <div class="top-header">
+    <h1>RNS V2 Manager</h1>
+    <div class="wallet-section">
+      <!-- Network Toggle -->
+      <div class="network-toggle">
+        <span class="network-label">Network:</span>
+        <div class="toggle-switch" id="networkToggle" data-network="stokenet">
+          <div class="toggle-option" data-value="stokenet">Stokenet</div>
+          <div class="toggle-option" data-value="mainnet">Mainnet</div>
+          <div class="toggle-slider"></div>
+        </div>
+      </div>
+
+      <radix-connect-button />
+
+      <div id="accountInfo" class="account-info hidden">
+        <span id="accountName"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Progress Tracker for Deployment (appears AFTER mode selection) -->
+  <div id="progressTracker" class="progress-tracker-container hidden">
+    <div class="progress-tracker">
+      <div class="tracker-step active" data-step="1">Package</div>
+      <div class="tracker-step" data-step="2">Prerequisites</div>
+      <div class="tracker-step" data-step="3">Instantiate</div>
+    </div>
+  </div>
+
+  <!-- Progress Tracker for Admin (appears AFTER mode selection) -->
+  <div id="adminProgressTracker" class="progress-tracker-container hidden">
+    <div class="progress-tracker">
+      <div class="tracker-step active" data-step="1">Component</div>
+      <div class="tracker-step" data-step="2">Reservations</div>
+      <div class="tracker-step" data-step="3">Badge Locks</div>
+      <div class="tracker-step" data-step="4">Activation</div>
+    </div>
+  </div>
+
+  <main>
+    <!-- Main Application -->
+    <div id="mainApplication">
+      <!-- Wallet Connection Gate -->
+      <div id="walletConnectionGate" class="wallet-gate">
+        <div class="gate-content">
+          <h2>🔐 Connect Your Wallet to Get Started</h2>
+          <p>Choose your action and connect your Radix wallet to proceed.</p>
+          <div class="gate-features">
+            <p style="margin-bottom: 16px; color: #fff; line-height: 1.6;">
+              The Radix Name Service (RNS) V2 Manager is a comprehensive application for deploying, configuring, and managing RNS V2 components on the Radix network. Whether you're instantiating a new naming service, administering existing components, monitoring statistics, or building dApp definitions, this tool provides an intuitive interface for all your RNS operations.
+            </p>
+            <p style="color: #fff; line-height: 1.6;">
+              Connect your wallet to access deployment wizards, component configuration tools, registrar management, and real-time analytics for both Stokenet and Mainnet networks.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Application Flow (Hidden until wallet connected) -->
+      <div id="applicationFlow" class="application-flow hidden">
+
+        <!-- Step 1: Mode Selection -->
+        <div id="step1" class="step active">
+          <h2>Step 1: Choose Your Action</h2>
+          <div class="mode-selection">
+            <div class="mode-card" data-mode="deploy">
+              <div class="mode-icon">🚀</div>
+              <h3>Instantiate New RNS</h3>
+              <p>Instantiate a fresh RNS V2 component to Stokenet or Mainnet</p>
+              <ul class="mode-features">
+                <li>Complete instantiation wizard</li>
+                <li>Resource configuration</li>
+                <li>Icon customization</li>
+              </ul>
+            </div>
+
+            <div class="mode-card" data-mode="admin">
+              <div class="mode-icon">⚙️</div>
+              <h3>Component Config</h3>
+              <p>Manage RNS components with admin privileges</p>
+              <ul class="mode-features">
+                <li>Bulk domain upload</li>
+                <li>V1 badge management</li>
+                <li>Component administration</li>
+              </ul>
+            </div>
+
+            <div class="mode-card" data-mode="manage">
+              <div class="mode-icon">📊</div>
+              <h3>RNS Statistics</h3>
+              <p>View live RNS V2 component statistics and metrics</p>
+              <ul class="mode-features">
+                <li>Total domains issued</li>
+                <li>V1 migration tracking</li>
+                <li>Unique user count</li>
+              </ul>
+            </div>
+
+            <div class="mode-card" data-mode="tools">
+              <div class="mode-icon">🛠️</div>
+              <h3>Developer Tools</h3>
+              <p>Radix development utilities and manifest generators</p>
+              <ul class="mode-features">
+                <li>dApp Definition Creator</li>
+                <li>Manifest builders</li>
+                <li>Quick utilities</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 2: Package Setup -->
+        <div id="step2" class="step">
+          <h2>Step 2: Package Setup</h2>
+
+          <div class="package-options">
+            <div class="package-option-card" data-option="existing">
+              <div class="option-icon">📦</div>
+              <h3>Use Existing Package</h3>
+              <p>I already have a deployed RNS V2 package</p>
+            </div>
+
+            <div class="package-option-card" data-option="new">
+              <div class="option-icon">🚀</div>
+              <h3>Deploy New Package</h3>
+              <p>I need to build and deploy a new package</p>
+            </div>
+          </div>
+
+          <!-- Existing Package Section -->
+          <div id="existingPackageSection" class="package-section hidden">
+            <div class="form-section">
+              <h3>📦 Enter Existing Package Address</h3>
+              <div class="form-group">
+                <label for="packageAddress">Package Address:</label>
+                <input id="packageAddress" type="text" class="form-control" placeholder="">
+                <small class="form-help">Enter the address of your previously deployed RNS V2 package</small>
+              </div>
+            </div>
+          </div>
+
+          <!-- New Package Section -->
+          <div id="newPackageSection" class="package-section hidden">
+            <div class="form-section">
+              <h3>🛠️ Build & Deploy New Package</h3>
+
+              <div class="deployment-steps-container">
+                <div class="step-item">
+                  <div class="step-number">1</div>
+                  <div class="step-content">
+                    <h4>Build Your Package</h4>
+                    <div class="code-block">
+                      <code>cd rns-core-v2</code><br>
+                      <code>scrypto build</code>
+                    </div>
+                    <p>This creates the required files in <code>target/wasm32-unknown-unknown/release/</code>:</p>
+                    <ul class="file-list">
+                      <li><code>rns-core-v2.wasm</code> - The compiled package</li>
+                      <li><code>rns-core-v2.rpd</code> - The package definition</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="step-item">
+                  <div class="step-number">2</div>
+                  <div class="step-content">
+                    <h4>Deploy via Developer Console</h4>
+                      <div class="deployment-instructions">
+                        <ol class="deployment-checklist">
+                        <li>Open <a id="consoleLink" href="https://stokenet-console.radixdlt.com/deploy-package"
+                            target="_blank">Developer Console</a></li>
+                          <li>Connect your Radix Wallet</li>
+                          <li>Upload both <code>.wasm</code> and <code>.rpd</code> files</li>
+                          <li>Set owner role to <strong>"None"</strong> (recommended)</li>
+                          <li>Sign the deployment transaction</li>
+                          <li>Copy the resulting <strong>package address</strong></li>
+                        </ol>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="step-item">
+                  <div class="step-number">3</div>
+                  <div class="step-content">
+                    <h4>Enter Package Address</h4>
+                    <div class="form-group">
+                      <input id="newPackageAddress" type="text" class="form-control" placeholder="">
+                      <small class="form-help">Paste the package address from your deployment transaction</small>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-navigation">
+            <button id="step2Back" class="btn btn-secondary">← Back</button>
+            <button id="step2Next" class="btn btn-primary" disabled>Select Package Option</button>
+          </div>
+        </div>
+
+        <!-- Step 3: Prerequisites -->
+        <div id="step3" class="step">
+          <h2>Step 3: Configure Prerequisites</h2>
+
+          <!-- Resource Creation Helper (Stokenet + Wallet Required) -->
+          <div id="resourceCreationHelper" class="form-section helper-section">
+            <h3 style="color: white;">🛠️ Create Test Resources</h3>
+            <p class="helper-description">
+              Don't have the required resources for testing? Create dummy resources instantly!
+              <strong>Connect your wallet on Stokenet to get started.</strong>
+            </p>
+            <div class="resource-creation-box">
+              <div class="resources-to-create">
+                <h4>Resources to be created:</h4>
+                <ul>
+                  <li><strong>fUSD</strong> - Fake USD payment token (100,000 tokens)</li>
+                  <li><strong>sUSD</strong> - Stable USD payment token (100,000 tokens)</li>
+                  <li><strong>Legacy Domain Resource</strong> - NFT collection for migration testing</li>
+                  <li><strong>V1 Admin Badge Resource</strong> - Admin badges for locking (5 badges)</li>
+                  <li><strong>V1 Upgrade Badge Resource</strong> - Upgrade badge for locking (1 badge)</li>
+                </ul>
+                <p class="helper-note">All resources and tokens will be created and deposited to your account.</p>
+              </div>
+              <button id="createDummyResources" class="btn btn-accent">
+                ⚡ Create Test Resources
+              </button>
+            </div>
+
+            <!-- Resource Creation Results -->
+            <div id="resourceCreationResults" class="resource-results hidden">
+              <h4>✅ Resources Created Successfully!</h4>
+              <div class="created-resources">
+                <div class="resource-result">
+                  <label>fUSD Address:</label>
+                  <div class="address-display">
+                    <span id="createdFUSD"></span>
+                    <button class="btn-copy">Copy</button>
+                  </div>
+                </div>
+                <div class="resource-result">
+                  <label>sUSD Address:</label>
+                  <div class="address-display">
+                    <span id="createdSUSD"></span>
+                    <button class="btn-copy">Copy</button>
+                  </div>
+                </div>
+                <div class="resource-result">
+                  <label>Legacy Domain Resource:</label>
+                  <div class="address-display">
+                    <span id="createdLegacyDomain"></span>
+                    <button class="btn-copy">Copy</button>
+                  </div>
+                </div>
+                <div class="resource-result">
+                  <label>V1 Admin Badge Resource:</label>
+                  <div class="address-display">
+                    <span id="createdV1AdminBadge"></span>
+                    <button class="btn-copy">Copy</button>
+                  </div>
+                </div>
+                <div class="resource-result">
+                  <label>V1 Upgrade Badge Resource:</label>
+                  <div class="address-display">
+                    <span id="createdV1UpgradeBadge"></span>
+                    <button class="btn-copy">Copy</button>
+                  </div>
+                </div>
+              </div>
+              <button id="useCreatedResources" class="btn btn-primary">
+                📝 Auto-fill Forms with Created Resources
+              </button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Payment Resources</h3>
+            <div class="form-group">
+              <label>Accepted Payment Tokens:</label>
+              <div id="paymentResourcesList" class="resource-list">
+                <div class="resource-input">
+                  <input type="text" class="payment-resource form-control" placeholder="fUSD Resource Address">
+                  <button class="btn-remove">×</button>
+                </div>
+              </div>
+              <button id="addPaymentResource" class="btn btn-secondary">+ Add Payment Resource</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Legacy & V1 Resources</h3>
+            <div class="form-group">
+              <label for="legacyDomainResource">Legacy Domain Resource Address:</label>
+              <input id="legacyDomainResource" type="text" class="form-control" placeholder="">
+            </div>
+            <div class="form-group">
+              <label for="v1AdminBadgeResource">V1 Admin Badge Resource Address:</label>
+              <input id="v1AdminBadgeResource" type="text" class="form-control" placeholder="">
+            </div>
+            <div class="form-group">
+              <label for="v1UpgradeBadgeResource">V1 Service Upgrade Badge Resource:</label>
+              <input id="v1UpgradeBadgeResource" type="text" class="form-control" placeholder="">
+            </div>
+          </div>
+
+
+          <div class="form-section">
+            <h3>Icon URLs</h3>
+            <div class="warning-box">
+              <strong>⚠️ Important:</strong> Use permanent, accessible URLs for icon assets.
+              Consider using IPFS, Arweave, Filecoin, or your own reliable CDN.
+            </div>
+
+            <div class="form-group">
+              <label for="domainIconUrl">Domain NFT Icon URL:</label>
+              <input id="domainIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/domain-icon.png">
+              <small class="form-help">Icon displayed for Domain NFTs</small>
+            </div>
+
+            <div class="form-group">
+              <label for="adminBadgeIconUrl">Admin Badge Icon URL:</label>
+              <input id="adminBadgeIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/admin-badge-icon.png">
+              <small class="form-help">Icon displayed for Admin Badges</small>
+            </div>
+
+            <div class="form-group">
+              <label for="configBadgeIconUrl">Config Badge Icon URL:</label>
+              <input id="configBadgeIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/config-badge-icon.png">
+              <small class="form-help">Icon displayed for Address Config Badges</small>
+            </div>
+
+            <div class="form-group">
+              <label for="registrarBadgeIconUrl">Registrar Badge Icon URL:</label>
+              <input id="registrarBadgeIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/registrar-badge-icon.png">
+              <small class="form-help">Icon displayed for Registrar Badge NFTs</small>
+            </div>
+
+          </div>
+
+          <div class="step-navigation">
+            <button id="step3Back" class="btn btn-secondary">← Back</button>
+            <button id="step3Next" class="btn btn-primary">Next →</button>
+          </div>
+        </div>
+
+        <!-- Step 4: Instantiate -->
+        <div id="step4" class="step">
+          <h2>Step 4: Instantiate</h2>
+
+            <div class="config-summary">
+              <h3>Instantiation Summary</h3>
+              <div id="configSummary"></div>
+            </div>
+
+            <div class="manifest-preview">
+              <h3>Transaction Manifest Preview</h3>
+              <pre id="manifestPreview" class="code-block"></pre>
+            </div>
+
+            <div class="deploy-section">
+            <button id="step4Back" class="btn btn-secondary">← Back</button>
+            <button id="step4Next" class="btn btn-primary">Instantiate RNS V2</button>
+            </div>
+
+          <div id="deploymentStatus" class="status-container hidden">
+              <div class="spinner"></div>
+            <p>Instantiating RNS V2...</p>
+            </div>
+
+            <div id="deploymentResult" class="result-container hidden">
+              <div class="success-icon">✅</div>
+              <h3>Instantiation Successful!</h3>
+              <div class="result-details">
+                <div class="result-item">
+                  <label>Component Address:</label>
+                  <span id="resultComponentAddress" class="address-value"></span>
+                  <button class="btn-copy">Copy</button>
+                </div>
+                <div class="result-item">
+                  <label>Admin Badge Resource:</label>
+                  <span id="resultAdminBadgeResource" class="address-value"></span>
+                  <button class="btn-copy">Copy</button>
+                </div>
+                <div class="result-item">
+                  <label>Domain Resource:</label>
+                  <span id="resultDomainResource" class="address-value"></span>
+                  <button class="btn-copy">Copy</button>
+                </div>
+              </div>
+              <button id="goToAdmin" class="btn btn-primary">Go to Component Config →</button>
+            </div>
+          </div>
+        </div> <!-- Close application flow -->
+      </div>
+
+    <!-- Hidden Admin Content - COMPLETE FRESH COPY OF DEPLOYMENT WIZARD STRUCTURE -->
+      <div id="adminContent" class="content-section hidden">
+        <!-- Admin Wallet Connection Gate -->
+        <div id="adminWalletGate" class="wallet-gate">
+          <div class="gate-content">
+            <h2>👨‍💼 Connect Your Wallet for Admin Access</h2>
+          <p>Access the component config to manage your deployed RNS V2 component.</p>
+            <div class="gate-features">
+              <h3>Component Config Features:</h3>
+              <ul>
+              <li>✅ Load and manage RNS components</li>
+                <li>✅ Bulk upload reserved domains</li>
+                <li>✅ Lock V1 admin and upgrade badges</li>
+                <li>✅ Burn admin badges to activate public registration</li>
+              </ul>
+            </div>
+            <div class="connect-prompt">
+              <p class="connect-help">Use the connect button in the header above to access admin features</p>
+            </div>
+          </div>
+        </div>
+
+      <!-- Admin Flow (EXACT COPY OF applicationFlow STRUCTURE) -->
+      <div id="adminFlow" class="application-flow hidden">
+
+        <!-- Admin Step 1: Load Component -->
+        <div id="adminStep1" class="step active">
+          <h2>Component</h2>
+
+          <div class="form-section">
+            <h3>📍 RNS Component Address</h3>
+            <div class="form-group">
+              <label for="adminComponentAddress">Component Address:</label>
+              <input id="adminComponentAddress" name="component-address" type="text" class="form-control" placeholder="" autocomplete="component-address" spellcheck="false">
+              <small class="form-help">Paste the component address of the deployed component (instantiated RNS V2 package) - connected resources will be auto-discovered</small>
+            </div>
+          </div>
+
+          <div class="step-navigation">
+            <button id="adminStep1Back" class="btn btn-secondary">← Back</button>
+            <button id="loadComponent" class="btn btn-primary">Load Component</button>
+          </div>
+        </div>
+
+        <!-- Admin Step 2: Reserved Domains Management -->
+        <div id="adminStep2" class="step">
+          <h2>Reservations</h2>
+          <div id="adminComponentInfo" class="form-section hidden">
+            <h3>Component</h3>
+            <div class="component-info-display">
+              <span id="adminComponentDisplay" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Bulk Upload Reserved Domains</h3>
+            <p class="form-help">Upload reserved domains in batches. You can upload multiple times before proceeding to
+              the next step.</p>
+
+                <div class="form-group">
+              <label for="reservedDomainsText">Domains List:</label>
+              <textarea id="reservedDomainsText" class="form-control" rows="8"
+                placeholder="example.xrd,account_tdx_2_1c8...&#10;radix.xrd,account_tdx_2_1c8...&#10;domain.xrd,account_tdx_2_1c8..."></textarea>
+                  <small class="form-help">Format: domain.xrd,account_address (one per line)</small>
+                </div>
+
+            <div id="reservedDomainsPreview" class="preview-section hidden">
+              <h4>Upload Preview</h4>
+              <div id="previewResults" class="preview-results"></div>
+            </div>
+
+            <div class="bulk-upload-actions">
+                  <button id="previewReservedDomains" class="btn btn-secondary">Preview Upload</button>
+                  <button id="uploadReservedDomains" class="btn btn-primary" disabled>Upload Reserved Domains</button>
+                </div>
+              </div>
+
+          <div id="uploadedDomainsSection" class="form-section hidden">
+            <h3>Recently Uploaded Domains</h3>
+            <p class="form-help">Domains uploaded in this session.</p>
+            <div id="uploadedDomainsList" class="domains-list"></div>
+          </div>
+
+          <div class="form-section">
+            <h3>Lookup Reserved Domain</h3>
+            <p class="form-help">Check if a specific domain is reserved and who can claim it.</p>
+
+            <div class="form-group">
+              <label for="domainLookupInput">Domain Name:</label>
+              <div class="component-selector">
+                <input id="domainLookupInput" type="text" class="form-control" placeholder="example.xrd">
+                <button id="lookupDomainBtn" class="btn btn-secondary">Lookup</button>
+              </div>
+            </div>
+
+            <div id="domainLookupResult" class="preview-section hidden">
+              <h4>Lookup Result</h4>
+              <div id="domainLookupDetails" class="preview-results"></div>
+            </div>
+              </div>
+
+          <div class="form-section">
+            <h3>All Reserved Domains</h3>
+            <p class="form-help">View all domains currently reserved in the component.</p>
+
+            <div id="allDomainsSection" class="preview-section">
+              <div id="allDomainsStats" class="preview-results"></div>
+
+              <div class="domains-list">
+                <table id="allDomainsTable">
+                  <thead>
+                    <tr>
+                      <th>Domain</th>
+                      <th>Claimant Address</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="allDomainsTableBody">
+                  </tbody>
+                </table>
+              </div>
+
+              <div id="domainsPagination" class="pagination-controls">
+                <button id="prevPageBtn" class="btn btn-secondary" disabled>← Previous</button>
+                <span id="pageInfo">Page 1</span>
+                <button id="nextPageBtn" class="btn btn-secondary" disabled>Next →</button>
+              </div>
+              </div>
+            </div>
+
+          <div class="step-navigation">
+            <button id="adminStep2Back" class="btn btn-secondary">← Back</button>
+            <button id="adminStep2Next" class="btn btn-primary">Continue →</button>
+                </div>
+                </div>
+
+        <!-- Admin Step 3: V1 Badge Locking -->
+        <div id="adminStep3" class="step">
+          <h2>Badge Locks</h2>
+
+          <div id="adminComponentInfo" class="form-section">
+            <h3>Component</h3>
+            <div class="component-info-display">
+              <span id="adminComponentDisplay3" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
+              </div>
+                </div>
+
+          <div class="form-section">
+            <h3>Lock V1 Admin Badges</h3>
+            <p class="form-help">Lock V1 admin badges to permanently deprecate the old system.</p>
+
+            <div id="adminBadgeStatus" class="status-display"></div>
+
+            <button id="lockAdminBadges" class="btn btn-warning">Lock All Admin Badges from Wallet</button>
+                  </div>
+
+                  <div class="form-section">
+            <h3>Lock V1 Upgrade Badges</h3>
+            <p class="form-help">Lock upgrade badges to prevent service modifications.</p>
+
+            <div id="upgradeBadgeStatus" class="status-display"></div>
+
+            <button id="lockUpgradeBadge" class="btn btn-warning">Lock All Upgrade Badges from Wallet</button>
+                  </div>
+
+                  <div class="form-section">
+            <h3>V1 Lock Status Summary</h3>
+            <p class="form-help">Overall status of V1 badge locking for RNS V2 launch validation.</p>
+            <div id="lockStatusResults" class="status-display"></div>
+            <button id="refreshLockStatus" class="btn btn-secondary">Refresh Status</button>
+                  </div>
+
+          <div class="step-navigation">
+            <button id="adminStep3Back" class="btn btn-secondary">← Back</button>
+            <button id="adminStep3Next" class="btn btn-primary">Continue →</button>
+                    </div>
+                  </div>
+
+        <!-- Admin Step 4: Admin Badge Management -->
+        <div id="adminStep4" class="step">
+          <h2>Activation</h2>
+
+          <div id="adminComponentInfo" class="form-section">
+            <h3>Component</h3>
+            <div class="component-info-display">
+              <span id="adminComponentDisplay4" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
+              </div>
+            </div>
+
+          <div class="form-section danger-zone">
+            <h3>🔥 Burn Admin Badge</h3>
+            
+            <p class="form-help" style="margin-bottom: 20px; font-size: 15px; line-height: 1.6;">
+              Burning the admin badge is the <strong>final step to launch RNS V2 for public use</strong>. 
+              This action permanently destroys the admin badge, which removes all privileged access and 
+              activates public domain registration. Once burned, the RNS system becomes fully decentralized 
+              and permissionless.
+            </p>
+
+            <div id="burnWarningSection">
+              <div class="warning-box">
+                <strong>⚠️ Warning:</strong> This action is irreversible and will activate public domain registration!
+                Once burned, the admin badge cannot be recovered.
+              </div>
+
+              <button id="burnAdminBadge" class="btn btn-danger">🔥 Burn Admin Badge</button>
+            </div>
+
+            <div id="burnCompletionMessage" class="success-message hidden" style="margin-top: 20px;">
+              <div style="font-size: 18px; margin-bottom: 10px;">✅ <strong>Admin Badge Burned Successfully!</strong></div>
+              <p style="margin: 0;">Public domain registration is now active. The RNS V2 system is fully decentralized and permissionless.</p>
+            </div>
+          </div>
+
+          <div class="step-navigation">
+            <button id="adminStep4Back" class="btn btn-secondary">← Back</button>
+            <button id="adminComplete" class="btn btn-success">Return to Mode Selection</button>
+          </div>
+        </div>
+
+      </div> <!-- Close adminFlow -->
+      </div>
+
+      <!-- Hidden Manage Content (will be shown in mode selection) -->
+      <div id="manageContent" class="content-section hidden">
+        <!-- Manage Wallet Connection Gate -->
+        <div id="manageWalletGate" class="wallet-gate">
+          <div class="gate-content">
+          <h2>📊 Connect Your Wallet to View RNS Statistics</h2>
+          <p>View live metrics and analytics for any RNS V2 component.</p>
+            <div class="gate-features">
+            <h3>Available Statistics:</h3>
+            <ul>
+              <li>✅ Total domains issued (V2)</li>
+              <li>✅ Domains migrated from V1</li>
+              <li>✅ Unique user count</li>
+              <li>✅ Component address lookup</li>
+              </ul>
+            </div>
+            <div class="connect-prompt">
+            <p class="connect-help">Use the connect button in the header above to view statistics</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Management Panel (Hidden until wallet connected) -->
+        <div id="managementPanel" class="management-panel hidden">
+          <div class="admin-nav">
+            <button id="manageBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
+          </div>
+        <h2>RNS Statistics Dashboard</h2>
+
+          <div class="component-search">
+            <div class="form-group">
+              <label for="searchComponentAddress">Component Address:</label>
+            <input id="searchComponentAddress" name="component-address" type="text" class="form-control" placeholder="" autocomplete="component-address" spellcheck="false">
+              <button id="searchComponent" class="btn btn-primary">Load Component</button>
+            </div>
+          </div>
+
+          <div id="componentDetails" class="component-details hidden">
+            <div id="componentInfo" class="info-grid"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden Tools Content (will be shown in mode selection) -->
+    <div id="toolsContent" class="content-section hidden">
+      <!-- Tools Wallet Connection Gate -->
+      <div id="toolsWalletGate" class="wallet-gate">
+        <div class="gate-content">
+          <h2>🛠️ Connect Your Wallet to Use Developer Tools</h2>
+          <p>Access Radix development utilities and manifest generators.</p>
+          <div class="gate-features">
+            <h3>Available Tools:</h3>
+            <ul>
+              <li>✅ dApp Definition Creator</li>
+              <li>✅ Metadata manifest generator</li>
+              <li>✅ Address validation utilities</li>
+            </ul>
+          </div>
+          <div class="connect-prompt">
+            <p class="connect-help">Use the connect button in the header above to access tools</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tools Panel (Hidden until wallet connected) -->
+      <div id="toolsPanel" class="tools-panel hidden">
+        <div class="admin-nav">
+          <button id="toolsBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
+        </div>
+        <h2>Developer Tools</h2>
+
+        <!-- Component Selection -->
+        <div class="component-search">
+          <div class="form-group">
+            <label for="toolsComponentAddress">RNS V2 Component Address:</label>
+            <input id="toolsComponentAddress" name="component-address" type="text" class="form-control" placeholder="component_tdx_2_1..." autocomplete="component-address" spellcheck="false">
+            <button id="loadToolsComponent" class="btn btn-primary">Load Component</button>
+          </div>
+        </div>
+
+        <div id="toolsComponentLoaded" class="hidden" style="margin-bottom: 24px;">
+          <div class="success-message">
+            <strong>✅ Component Loaded</strong>
+            <p style="margin: 8px 0 0 0;">
+              <code id="toolsLoadedComponentAddress" style="font-size: 0.9rem;"></code>
+            </p>
+          </div>
+        </div>
+
+        <!-- dApp Definition Creator -->
+        <div class="tool-section collapsible-tool collapsed hidden">
+          <div class="tool-header" data-tool="dappDefinition">
+            <h3>🏗️ dApp Definition Creator</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <p class="tool-description">Generate a dApp definition account with proper metadata and claimed entities.</p>
+          
+          <div class="tool-content" id="dappDefinitionContent">
+            <div class="form-section">
+              <h4>Basic Information</h4><br />
+              <div class="form-group">
+                <label for="dappAccountAddress">dApp Account Address:</label>
+                <input id="dappAccountAddress" type="text" class="form-control" placeholder="account_tdx_2_1..." autocomplete="off" spellcheck="false">
+                <small class="form-help">An account you own that will become the dApp definition (create one in your wallet first)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="dappName">dApp Name:</label>
+                <input id="dappName" type="text" class="form-control" placeholder="My Radix dApp">
+                <small class="form-help">The display name of your dApp</small>
+              </div>
+
+              <div class="form-group">
+                <label for="dappDescription">Description:</label>
+                <textarea id="dappDescription" class="form-control" rows="3" placeholder="A brief description of what your dApp does"></textarea>
+                <small class="form-help">Describe your dApp's purpose and features</small>
+              </div>
+
+              <div class="form-group">
+                <label for="dappIconUrl">Icon URL:</label>
+                <input id="dappIconUrl" type="url" class="form-control" placeholder="https://example.com/icon.png">
+                <small class="form-help">URL to your dApp's icon image</small>
+              </div>
+
+              <div class="form-group">
+                <label for="dappTags">Tags:</label>
+                <input id="dappTags" type="text" class="form-control" placeholder="defi, nft, exchange">
+                <small class="form-help">Comma-separated tags to categorize your dApp</small>
+              </div>
+
+              <h4 style="margin-top: 24px;">Claimed Websites</h4>
+            <p class="form-help">Enter the website URLs associated with your dApp (one per line)</p>
+            <div class="form-group">
+              <textarea id="dappWebsites" class="form-control" rows="4" placeholder="https://example.com&#10;https://app.example.com"></textarea>
+              <small class="form-help">These websites will be officially linked to your dApp definition</small>
+            </div>
+
+            <div class="form-actions">
+              <button id="previewDappManifest" class="btn btn-primary">Preview Manifest</button>
+            </div>
+          </div>
+
+          <div id="dappManifestOutput" class="manifest-output hidden">
+            <h4>Preview</h4>
+            
+            <div id="discoveredEntities" class="form-section">
+              <h5>Discovered Entities</h5>
+              <div id="entitiesList" class="entities-list"></div>
+              <p class="form-help" style="margin-top: 12px;">These addresses will be claimed by your dApp definition</p>
+            </div>
+
+            <h5 style="margin-top: 20px;">Transaction Manifest</h5>
+            <div class="manifest-display">
+              <pre id="dappManifestCode"></pre>
+              <button class="btn-copy" id="copyDappManifest">Copy Manifest</button>
+            </div>
+            <div class="manifest-info">
+              <p><strong>⚠️ Important:</strong> This manifest will create a new account as your dApp definition. Save the account address after submission!</p>
+            </div>
+
+            <div class="form-actions" style="margin-top: 20px;">
+              <button id="submitDappDefinition" class="btn btn-success">Submit to Wallet</button>
+            </div>
+          </div>
+
+          <div id="dappDefinitionResult" class="result-output hidden">
+            <h4>dApp Definition Created</h4>
+            <div class="info-card">
+              <div class="info-row">
+                <span class="info-label">dApp Definition Address:</span>
+                <span class="info-value address-value" id="dappDefinitionAddress"></span>
+                <button class="btn-copy" id="copyDappAddress">Copy</button>
+              </div>
+            </div>
+          </div>
+          </div>
+        </div>
+
+        <!-- Registrar Management -->
+        <div class="tool-section collapsible-tool collapsed hidden">
+          <div class="tool-header" data-tool="registrarManagement">
+            <h3>🎫 Registrar Management</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <p class="tool-description">Request registrar badges or manage your existing registrar service.</p>
+          
+          <div class="tool-content" id="registrarManagementContent">
+            
+            <!-- Request New Registrar Badge -->
+            <div class="form-section">
+              <h4>Request Registrar Badge</h4>
+              <p class="form-help">Register as a new registrar to earn fees from domain registrations</p>
+              
+              <div class="form-group">
+                <label for="newRegistrarName">Registrar Name:</label>
+                <input id="newRegistrarName" type="text" class="form-control" placeholder="My Registrar Service">
+                <small class="form-help">The display name for your registrar service</small>
+              </div>
+
+              <div class="form-group">
+                <label for="newRegistrarIconUrl">Icon URL:</label>
+                <input id="newRegistrarIconUrl" type="url" class="form-control" placeholder="https://example.com/icon.png">
+                <small class="form-help">URL to your registrar's icon image</small>
+              </div>
+
+              <div class="form-group">
+                <label for="newRegistrarWebsiteUrl">Website URL:</label>
+                <input id="newRegistrarWebsiteUrl" type="url" class="form-control" placeholder="https://example.com">
+                <small class="form-help">URL to your registrar's website</small>
+              </div>
+
+              <div class="form-group">
+                <label for="newRegistrarFeePercentage">Fee Percentage:</label>
+                <input id="newRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1" min="0" max="100">
+                <small class="form-help">Percentage of registration fees you'll earn (0-100)</small>
+              </div>
+
+              <button id="requestRegistrarBadge" class="btn btn-primary">Request Registrar Badge</button>
+            </div>
+
+            <!-- Manage Existing Registrar -->
+            <div class="form-section" style="margin-top: 32px;">
+              <h4>Manage Existing Registrar</h4>
+              <p class="form-help">Your registrar badges will be automatically detected</p>
+
+              <div id="registrarBadgesList" class="hidden" style="margin-top: 20px;">
+                <p class="form-help"><strong>Your Registrar Badges:</strong></p>
+                <div id="registrarBadgesContent" class="info-card"></div>
+              </div>
+            </div>
+
+          </div>
+          </div>
+        </div>
+      </div>
+  </main>
+
+  <!-- Registrar Management Modal -->
+  <div id="registrarModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3>Manage Registrar Badge</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body" style="padding: 32px;">
+        <!-- Registrar Info Display -->
+        <div id="registrarInfoDisplay" class="form-section" style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Registrar Information</h4>
+          <div id="registrarInfoContent" class="info-card" style="padding: 0;"></div>
+        </div>
+
+        <!-- Update Registrar Settings -->
+        <div id="updateRegistrarSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Update Settings</h4>
+          
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="updateRegistrarName">Name:</label>
+            <input id="updateRegistrarName" type="text" class="form-control" placeholder="New registrar name">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="updateRegistrarIconUrl">Icon URL:</label>
+            <input id="updateRegistrarIconUrl" type="url" class="form-control" placeholder="https://example.com/new-icon.png">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="updateRegistrarWebsiteUrl">Website URL:</label>
+            <input id="updateRegistrarWebsiteUrl" type="url" class="form-control" placeholder="https://example.com">
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="updateRegistrarFeePercentage">Fee Percentage:</label>
+            <input id="updateRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1" min="0" max="100">
+          </div>
+
+          <button id="updateRegistrarSettings" class="btn btn-primary">Update Settings</button>
+        </div>
+
+        <!-- Withdraw Fees -->
+        <div id="withdrawFeesSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Withdraw Accumulated Fees</h4>
+          <div class="info-message" style="margin-bottom: 16px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db; border-radius: 4px;">
+            <p style="margin: 0; font-size: 0.9em;">
+              <strong>Withdrawal Requirement:</strong> You must have issued at least 100 domains via your registrar badge before fees can be withdrawn.
+            </p>
+          </div>
+          <div id="accumulatedFeesContent" class="info-card">
+            <p class="info-empty">Loading fee information...</p>
+          </div>
+        </div>
+
+        <!-- Burn Registrar Badge -->
+        <div id="burnRegistrarSection" class="form-section danger-zone" style="padding-top: 32px;">
+          <h4 style="margin-bottom: 12px; font-size: 1.1em;">🔥 Burn Registrar Badge</h4>
+          <p style="margin-bottom: 16px; color: #888;">Permanently delete your registrar badge. You will no longer be a registrar and be able to earn or withdraw fees.</p>
+          <div class="warning-box" style="margin-bottom: 16px;">
+            <p>⚠️ <strong>Warning:</strong> This action cannot be undone. Your registrar badge will be permanently burned.</p>
+          </div>
+          <button id="burnRegistrarBadge" class="btn btn-danger">Burn Registrar Badge</button>
+        </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Transaction Status Modal -->
+      <div id="transactionModal" class="modal hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Transaction Status</h3>
+            <button class="modal-close">×</button>
+          </div>
+          <div class="modal-body">
+            <div id="transactionStatus" class="transaction-status">
+              <div class="spinner"></div>
+              <p>Processing transaction...</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+  <script type="module" src="main.js"></script>
+</body>
+
+</html>
