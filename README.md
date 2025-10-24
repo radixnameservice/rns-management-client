@@ -145,15 +145,6 @@ rns-management-client/
 └── .gitignore             # Git ignore rules
 ```
 
-## 🔧 Technologies Used
-
-- **[Vite](https://vitejs.dev/)** - Fast build tool and dev server
-- **[Radix dApp Toolkit](https://docs.radixdlt.com/docs/radix-dapp-toolkit)** - Wallet connection and transaction submission
-- **[Babylon Gateway API SDK](https://docs.radixdlt.com/docs/babylon-gateway-api)** - Query blockchain data
-- **[Radix Engine Toolkit](https://docs.radixdlt.com/docs/radix-engine-toolkit)** - Transaction manifest utilities
-- **Vanilla JavaScript** - No framework overhead, pure performance
-- **CSS3** - Modern gradients, animations, and responsive design
-
 ## 🎨 Key Components
 
 ### Manifest Builders
@@ -249,29 +240,4 @@ Contributions are welcome! Please follow these steps:
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👥 Authors
-
-**RNS Team**
-
-## 🙏 Acknowledgments
-
-- [Radix DLT](https://www.radixdlt.com/) for the amazing blockchain technology
-- [Radix Community](https://forum.radixdlt.com/) for support and feedback
-- All contributors who helped build and improve this tool
-
-## 📞 Support
-
-- **Documentation**: [Radix Docs](https://docs.radixdlt.com/)
-- **Community Forum**: [forum.radixdlt.com](https://forum.radixdlt.com/)
-- **Discord**: [Radix Discord](https://discord.gg/radixdlt)
-
-## 🔗 Links
-
-- [Radix DLT Website](https://www.radixdlt.com/)
-- [Radix Wallet](https://wallet.radixdlt.com/)
-- [Radix Dashboard](https://dashboard.radixdlt.com/)
-- [RNS V2 Documentation](https://github.com/radixdlt/rns-v2)
-
----
+This project is licensed under the MIT License.
