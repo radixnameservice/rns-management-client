@@ -2,6 +2,8 @@
 
 A comprehensive web application for deploying, configuring, and managing Radix Name Service (RNS) V2 components on the Radix network. Built with modern web technologies and the Radix dApp Toolkit for seamless wallet integration.
 
+**🚀 Live App: [https://radixnameservice.github.io/rns-management-client/](https://radixnameservice.github.io/rns-management-client/)**
+
 ## 🌟 Features
 
 ### 📦 Instantiate New RNS
@@ -45,13 +47,25 @@ Seamless switching between networks:
 
 ## 🚀 Getting Started
 
-### Prerequisites
+### 🌐 Quick Start (No Installation Required)
+
+**Use the hosted version:**
+
+👉 **[https://radixnameservice.github.io/rns-management-client/](https://radixnameservice.github.io/rns-management-client/)**
+
+---
+
+### 💻 Local Development Setup (Optional)
+
+If you prefer to run locally or contribute to development:
+
+#### Prerequisites
 
 - Node.js (v16 or higher)
 - npm or yarn
 - A Radix Wallet (for connecting to the dApp)
 
-### Installation
+#### Installation
 
 1. **Clone the repository**
    ```bash
@@ -108,9 +122,16 @@ npm run deploy
 
 **See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions.**
 
-Your site will be live at: `https://your-username.github.io/rns-management-client/`
+The official deployment is live at: **[https://radixnameservice.github.io/rns-management-client/](https://radixnameservice.github.io/rns-management-client/)**
 
 ## 📖 Usage Guide
+
+### 0. Access the Application
+
+**Option A:** Use the hosted version
+- Visit [https://radixnameservice.github.io/rns-management-client/](https://radixnameservice.github.io/rns-management-client/)
+
+**Option B:** Run locally for development (see installation steps above)
 
 ### 1. Connect Your Wallet
 

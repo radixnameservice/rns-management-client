@@ -2,6 +2,16 @@
 
 This guide will help you deploy the RNS V2 Manager to GitHub Pages.
 
+## 🌐 Live Deployment
+
+The official RNS V2 Manager is currently hosted at:
+
+**[https://radixnameservice.github.io/rns-management-client/](https://radixnameservice.github.io/rns-management-client/)**
+
+This deployment is automatically updated whenever changes are pushed to the main branch.
+
+---
+
 ## 🚀 Quick Deployment (Automated with GitHub Actions)
 
 The easiest way to deploy is using the included GitHub Actions workflow.
