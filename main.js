@@ -112,17 +112,6 @@ function initializeRadixIntegration() {
   });
 }
 
-// ********** Global Error Handler **********
-// Suppress non-critical Radix dApp Toolkit errors during DOM mutations
-window.addEventListener('error', function(event) {
-  // Suppress "Cannot read properties of null (reading 'dataset')" from Radix toolkit
-  if (event.message && event.message.includes("Cannot read properties of null (reading 'dataset')")) {
-    event.preventDefault();
-    event.stopPropagation();
-    return false;
-  }
-}, true);
-
 // ********** Initialization **********
 function initializeUIElements() {
   // Starting UI elements initialization
@@ -385,31 +374,31 @@ function initializeNetworkDefaults() {
   
   // Set default component metadata if empty
   if (!elements.componentName?.value) {
-    elements.componentName.value = "Radix Name Service V2";
+    elements.componentName.value = "";
   }
   if (!elements.componentDescription?.value) {
-    elements.componentDescription.value = "Decentralized naming system for the Radix network";
+    elements.componentDescription.value = "";
   }
   if (!elements.componentTags?.value) {
-    elements.componentTags.value = "naming, dns, identity";
+    elements.componentTags.value = "";
   }
   if (!elements.componentInfoUrl?.value) {
-    elements.componentInfoUrl.value = "https://rns.foundation";
+    elements.componentInfoUrl.value = "";
   }
   if (!elements.componentIconUrl?.value) {
-    elements.componentIconUrl.value = "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+    elements.componentIconUrl.value = "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
   }
   if (!elements.subregistryName?.value) {
-    elements.subregistryName.value = "Domain Subregistry";
+    elements.subregistryName.value = "";
   }
   if (!elements.subregistryDescription?.value) {
-    elements.subregistryDescription.value = "Manages subdomains and records for domain";
+    elements.subregistryDescription.value = "";
   }
   if (!elements.subregistryTags?.value) {
-    elements.subregistryTags.value = "subdomain, records";
+    elements.subregistryTags.value = "";
   }
   if (!elements.subregistryIconUrl?.value) {
-    elements.subregistryIconUrl.value = "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+    elements.subregistryIconUrl.value = "https://arweave.net/8uiwedlLN8HdODKI_-FZSUEUXkY4NTw4PJkeJcWqe_k";
   }
   
   // Network defaults initialized
@@ -439,54 +428,41 @@ function goToStep(step) {
     });
   }
   
-  // Update step visibility - batch DOM changes to minimize reflows
+  // Update step visibility - do all DOM changes atomically in a single pass
+  // This prevents triggering Radix toolkit's MutationObserver multiple times
   if (elements.steps) {
-    // First pass: hide all steps
-    elements.steps.forEach((el) => {
+    elements.steps.forEach((el, index) => {
       if (el) {
-        el.classList.remove("active");
-        el.classList.add("hidden");
-      }
-    });
-    
-    // Second pass: show active step
-    // Use requestAnimationFrame to ensure DOM is stable
-    requestAnimationFrame(() => {
-      elements.steps.forEach((el, index) => {
-        if (el && index + 1 === step) {
+        const isActive = (index + 1 === step);
+        // Update both classes atomically
+        if (isActive) {
           el.classList.add("active");
           el.classList.remove("hidden");
+        } else {
+          el.classList.remove("active");
+          el.classList.add("hidden");
         }
-      });
+      }
     });
   }
   
   currentStep = step;
   
   // Update manifest and config summary when entering step 4 (Instantiate)
-  // Delay to ensure DOM is stable
   if (step === 4 && selectedMode === 'deploy') {
-    requestAnimationFrame(() => {
-      updateConfigSummary();
-      updateManifestPreview();
-    });
+    updateConfigSummary();
+    updateManifestPreview();
   }
 }
 
 function nextStep() {
   if (validateCurrentStep()) {
-    // Use requestAnimationFrame for smoother transitions
-    requestAnimationFrame(() => {
-      goToStep(currentStep + 1);
-    });
+    goToStep(currentStep + 1);
   }
 }
 
 function previousStep() {
-  // Use requestAnimationFrame for smoother transitions
-  requestAnimationFrame(() => {
-    goToStep(currentStep - 1);
-  });
+  goToStep(currentStep - 1);
 }
 
 // ********** Admin Wizard Step Management **********
@@ -496,22 +472,24 @@ function goToAdminStep(step) {
   // Update progress tracker
   const adminProgressSteps = document.querySelectorAll("#adminProgressTracker .tracker-step");
   adminProgressSteps.forEach((el, index) => {
-    el.classList.toggle("active", index + 1 === step);
-    el.classList.toggle("completed", index + 1 < step);
+    if (el) {
+      el.classList.toggle("active", index + 1 === step);
+      el.classList.toggle("completed", index + 1 < step);
+    }
   });
   
-  // Update step visibility (use admin step IDs directly)
-  // CRITICAL: Handle both .active and .hidden classes, similar to deployment wizard
+  // Update step visibility atomically - all changes in single pass
+  // This prevents triggering Radix toolkit's MutationObserver multiple times
   for (let i = 1; i <= 5; i++) {
     const stepEl = document.getElementById(`adminStep${i}`);
     if (stepEl) {
       const isActive = (i === step);
-      stepEl.classList.toggle("active", isActive);
-      
-      // Remove .hidden if making active, add .hidden otherwise
+      // Update both classes atomically
       if (isActive) {
+        stepEl.classList.add("active");
         stepEl.classList.remove("hidden");
       } else {
+        stepEl.classList.remove("active");
         stepEl.classList.add("hidden");
       }
     }
@@ -671,15 +649,15 @@ function validateStep3() {
   }
   
   // Get component metadata
-  const componentName = elements.componentName.value.trim() || "Radix Name Service V2";
-  const componentDescription = elements.componentDescription.value.trim() || "Decentralized naming system for the Radix network";
-  const componentTagsText = elements.componentTags.value.trim() || "naming, dns, identity";
-  const componentInfoUrl = elements.componentInfoUrl.value.trim() || "https://rns.foundation";
-  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
-  const subregistryName = elements.subregistryName.value.trim() || "Domain Subregistry";
-  const subregistryDescription = elements.subregistryDescription.value.trim() || "Manages subdomains and records for domain";
-  const subregistryTagsText = elements.subregistryTags.value.trim() || "subdomain, records";
-  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+  const componentName = elements.componentName.value.trim() || "";
+  const componentDescription = elements.componentDescription.value.trim() || "";
+  const componentTagsText = elements.componentTags.value.trim() || "";
+  const componentInfoUrl = elements.componentInfoUrl.value.trim() || "";
+  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+  const subregistryName = elements.subregistryName.value.trim() || "";
+  const subregistryDescription = elements.subregistryDescription.value.trim() || "";
+  const subregistryTagsText = elements.subregistryTags.value.trim() || "";
+  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/8uiwedlLN8HdODKI_-FZSUEUXkY4NTw4PJkeJcWqe_k";
   
   // Parse tags into arrays
   const componentTags = componentTagsText.split(',').map(t => t.trim()).filter(t => t);
@@ -2008,8 +1986,6 @@ async function loadAllReservedDomains() {
         </div>
       `;
       document.getElementById("allDomainsSection").classList.remove("hidden");
-      loadBtn.disabled = false;
-      loadBtn.textContent = "Load All Reserved Domains";
       return;
     }
     
@@ -3019,7 +2995,9 @@ function showError(message) {
   document.body.appendChild(errorDiv);
   
   setTimeout(() => {
-    document.body.removeChild(errorDiv);
+    if (errorDiv && errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
   }, 5000);
 }
 
@@ -3031,7 +3009,9 @@ function showSuccess(message) {
   document.body.appendChild(successDiv);
   
   setTimeout(() => {
-    document.body.removeChild(successDiv);
+    if (successDiv && successDiv.parentNode) {
+      successDiv.parentNode.removeChild(successDiv);
+    }
   }, 5000);
 }
 
