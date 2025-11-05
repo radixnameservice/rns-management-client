@@ -9,8 +9,10 @@ A comprehensive web application for deploying, configuring, and managing Radix N
 ### 📦 Instantiate New RNS
 Deploy a fresh RNS V2 component to Stokenet or Mainnet with a complete guided wizard:
 - **Package Setup**: Deploy new packages or use existing ones
-- **Resource Configuration**: Configure payment tokens, legacy resources, and V1 badges
-- **Icon Customization**: Set custom icons for domains, admin badges, and registrar badges
+- **Prerequisites**: Configure payment tokens, legacy resources, V1 badges, and component metadata
+- **Component Metadata**: Set name, description, tags, info URL, and icon for the main component
+- **Subregistry Metadata**: Define metadata templates for all domain subregistries
+- **Icon Customization**: Set custom icons for domains, admin badges, config badges, and registrar badges
 - **Transaction Preview**: Review manifest before deployment
 - **Result Tracking**: Get all deployed addresses after successful instantiation
 
@@ -20,6 +22,7 @@ Manage deployed RNS V2 components with admin privileges:
 - **Bulk Domain Upload**: Upload reserved domains in batches
 - **Domain Lookup**: Check reservation status and claimant information
 - **V1 Badge Locking**: Permanently lock V1 admin and upgrade badges
+- **dApp Definition**: Link your component to a dApp definition account (required before burning admin badge)
 - **Admin Badge Management**: Burn admin badges to activate public registration
 - **Pagination**: Browse all reserved domains with efficient pagination
 
@@ -147,16 +150,18 @@ Select one of four main modes:
 
 #### Instantiate New RNS
 1. Choose to use an existing package or deploy a new one
-2. Configure payment resources and V1 legacy addresses
-3. Set icon URLs for NFTs and badges
-4. Review the transaction manifest
-5. Submit to your wallet and sign
+2. Configure payment resources, V1 legacy addresses, and component metadata
+3. Set component name, description, tags, and subregistry templates
+4. Set icon URLs for domains, admin badges, config badges, and registrar badges
+5. Review the transaction manifest
+6. Submit to your wallet and sign
 
 #### Component Config
 1. Enter your deployed RNS component address
 2. Upload reserved domains in bulk (CSV format: `domain.xrd,account_address`)
 3. Lock V1 badges to prevent modifications
-4. Burn admin badge to activate public registration
+4. Link component to dApp definition (use existing or create new)
+5. Burn admin badge to activate public registration (requires dApp definition)
 
 #### RNS Statistics
 1. Enter any RNS V2 component address
