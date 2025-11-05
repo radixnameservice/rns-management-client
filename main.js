@@ -112,6 +112,17 @@ function initializeRadixIntegration() {
   });
 }
 
+// ********** Global Error Handler **********
+// Suppress non-critical Radix dApp Toolkit errors during DOM mutations
+window.addEventListener('error', function(event) {
+  // Suppress "Cannot read properties of null (reading 'dataset')" from Radix toolkit
+  if (event.message && event.message.includes("Cannot read properties of null (reading 'dataset')")) {
+    event.preventDefault();
+    event.stopPropagation();
+    return false;
+  }
+}, true);
+
 // ********** Initialization **********
 function initializeUIElements() {
   // Starting UI elements initialization
@@ -184,10 +195,22 @@ function initializeUIElements() {
     adminBadgeIconUrl: document.getElementById("adminBadgeIconUrl"),
     configBadgeIconUrl: document.getElementById("configBadgeIconUrl"),
     registrarBadgeIconUrl: document.getElementById("registrarBadgeIconUrl"),
+    
+    // Component metadata elements
+    componentName: document.getElementById("componentName"),
+    componentDescription: document.getElementById("componentDescription"),
+    componentTags: document.getElementById("componentTags"),
+    componentInfoUrl: document.getElementById("componentInfoUrl"),
+    componentIconUrl: document.getElementById("componentIconUrl"),
+    subregistryName: document.getElementById("subregistryName"),
+    subregistryDescription: document.getElementById("subregistryDescription"),
+    subregistryTags: document.getElementById("subregistryTags"),
+    subregistryIconUrl: document.getElementById("subregistryIconUrl"),
+    
     step3Back: document.getElementById("step3Back"),
     step3Next: document.getElementById("step3Next"),
     
-    // Step 4 elements (formerly Step 5 - Instantiate)
+    // Step 4 elements (Instantiate)
     configSummary: document.getElementById("configSummary"),
     manifestPreview: document.getElementById("manifestPreview"),
     step4Back: document.getElementById("step4Back"),
@@ -360,6 +383,35 @@ function initializeNetworkDefaults() {
     elements.registrarBadgeIconUrl.value = "https://arweave.net/l56120F-BAGF3IySziHyGu_7dkhMPKDtYuEVS9IEAf8";
   }
   
+  // Set default component metadata if empty
+  if (!elements.componentName?.value) {
+    elements.componentName.value = "Radix Name Service V2";
+  }
+  if (!elements.componentDescription?.value) {
+    elements.componentDescription.value = "Decentralized naming system for the Radix network";
+  }
+  if (!elements.componentTags?.value) {
+    elements.componentTags.value = "naming, dns, identity";
+  }
+  if (!elements.componentInfoUrl?.value) {
+    elements.componentInfoUrl.value = "https://rns.foundation";
+  }
+  if (!elements.componentIconUrl?.value) {
+    elements.componentIconUrl.value = "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+  }
+  if (!elements.subregistryName?.value) {
+    elements.subregistryName.value = "Domain Subregistry";
+  }
+  if (!elements.subregistryDescription?.value) {
+    elements.subregistryDescription.value = "Manages subdomains and records for domain";
+  }
+  if (!elements.subregistryTags?.value) {
+    elements.subregistryTags.value = "subdomain, records";
+  }
+  if (!elements.subregistryIconUrl?.value) {
+    elements.subregistryIconUrl.value = "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+  }
+  
   // Network defaults initialized
 }
 
@@ -377,45 +429,64 @@ function switchTab(tabName) {
 function goToStep(step) {
   // Update progress bar (step 1 is mode selection, not in tracker)
   // Tracker shows steps 2-4 as positions 1-3
-  if (step >= 2) {
+  if (step >= 2 && elements.progressSteps) {
     const trackerStep = step - 1; // Map step 2->1, step 3->2, step 4->3
-  elements.progressSteps.forEach((el, index) => {
-      el.classList.toggle("active", index + 1 === trackerStep);
-      el.classList.toggle("completed", index + 1 < trackerStep);
-  });
+    elements.progressSteps.forEach((el, index) => {
+      if (el) {
+        el.classList.toggle("active", index + 1 === trackerStep);
+        el.classList.toggle("completed", index + 1 < trackerStep);
+      }
+    });
   }
   
-  // Update step visibility
-  elements.steps.forEach((el, index) => {
-    const isActive = index + 1 === step;
-    el.classList.toggle("active", isActive);
+  // Update step visibility - batch DOM changes to minimize reflows
+  if (elements.steps) {
+    // First pass: hide all steps
+    elements.steps.forEach((el) => {
+      if (el) {
+        el.classList.remove("active");
+        el.classList.add("hidden");
+      }
+    });
     
-    // CRITICAL FIX: Remove .hidden class when making step active
-    // because .hidden has !important which overrides .step.active
-    if (isActive) {
-      el.classList.remove("hidden");
-    } else {
-      el.classList.add("hidden");
-    }
-  });
+    // Second pass: show active step
+    // Use requestAnimationFrame to ensure DOM is stable
+    requestAnimationFrame(() => {
+      elements.steps.forEach((el, index) => {
+        if (el && index + 1 === step) {
+          el.classList.add("active");
+          el.classList.remove("hidden");
+        }
+      });
+    });
+  }
   
   currentStep = step;
   
   // Update manifest and config summary when entering step 4 (Instantiate)
+  // Delay to ensure DOM is stable
   if (step === 4 && selectedMode === 'deploy') {
-    updateConfigSummary();
-    updateManifestPreview();
+    requestAnimationFrame(() => {
+      updateConfigSummary();
+      updateManifestPreview();
+    });
   }
 }
 
 function nextStep() {
   if (validateCurrentStep()) {
-    goToStep(currentStep + 1);
+    // Use requestAnimationFrame for smoother transitions
+    requestAnimationFrame(() => {
+      goToStep(currentStep + 1);
+    });
   }
 }
 
 function previousStep() {
-  goToStep(currentStep - 1);
+  // Use requestAnimationFrame for smoother transitions
+  requestAnimationFrame(() => {
+    goToStep(currentStep - 1);
+  });
 }
 
 // ********** Admin Wizard Step Management **********
@@ -431,7 +502,7 @@ function goToAdminStep(step) {
   
   // Update step visibility (use admin step IDs directly)
   // CRITICAL: Handle both .active and .hidden classes, similar to deployment wizard
-  for (let i = 1; i <= 4; i++) {
+  for (let i = 1; i <= 5; i++) {
     const stepEl = document.getElementById(`adminStep${i}`);
     if (stepEl) {
       const isActive = (i === step);
@@ -451,12 +522,28 @@ function goToAdminStep(step) {
     loadAllReservedDomains();
   }
   
+  // Update component address displays when navigating
+  if (adminComponentAddress) {
+    const displays = [
+      document.getElementById('adminComponentDisplay'),
+      document.getElementById('adminComponentDisplay3'),
+      document.getElementById('adminComponentDisplay4'),
+      document.getElementById('adminComponentDisplay5')
+    ];
+    
+    displays.forEach(display => {
+      if (display) {
+        display.textContent = adminComponentAddress;
+      }
+    });
+  }
+  
   // Scroll to top
   window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function nextAdminStep() {
-  if (currentAdminStep < 4) {
+  if (currentAdminStep < 5) {
     goToAdminStep(currentAdminStep + 1);
   }
 }
@@ -478,11 +565,11 @@ function validateCurrentStep() {
     case 1:
       return validateStep1();
     case 2:
-      return validateStep2(); // Package setup (was step 3)
+      return validateStep2(); // Package setup
     case 3:
-      return validateStep3(); // Prerequisites (was step 4)
+      return validateStep3(); // Prerequisites
     case 4:
-      return validateStep4(); // Instantiate (was step 5)
+      return validateStep4(); // Instantiate
     default:
       return true;
   }
@@ -583,6 +670,21 @@ function validateStep3() {
     return false;
   }
   
+  // Get component metadata
+  const componentName = elements.componentName.value.trim() || "Radix Name Service V2";
+  const componentDescription = elements.componentDescription.value.trim() || "Decentralized naming system for the Radix network";
+  const componentTagsText = elements.componentTags.value.trim() || "naming, dns, identity";
+  const componentInfoUrl = elements.componentInfoUrl.value.trim() || "https://rns.foundation";
+  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+  const subregistryName = elements.subregistryName.value.trim() || "Domain Subregistry";
+  const subregistryDescription = elements.subregistryDescription.value.trim() || "Manages subdomains and records for domain";
+  const subregistryTagsText = elements.subregistryTags.value.trim() || "subdomain, records";
+  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/Ttd9T5MTG89AcHfLHSGlOClT0bUQuALeyKfdvlN_tfE";
+  
+  // Parse tags into arrays
+  const componentTags = componentTagsText.split(',').map(t => t.trim()).filter(t => t);
+  const subregistryTags = subregistryTagsText.split(',').map(t => t.trim()).filter(t => t);
+  
   // Save all config
   deploymentConfig.paymentResources = paymentResources;
   deploymentConfig.legacyDomainResource = legacyDomain;
@@ -592,12 +694,21 @@ function validateStep3() {
   deploymentConfig.adminBadgeIconUrl = adminBadgeIconUrl;
   deploymentConfig.configBadgeIconUrl = configBadgeIconUrl;
   deploymentConfig.registrarBadgeIconUrl = registrarBadgeIconUrl;
+  deploymentConfig.componentName = componentName;
+  deploymentConfig.componentDescription = componentDescription;
+  deploymentConfig.componentTags = componentTags;
+  deploymentConfig.componentInfoUrl = componentInfoUrl;
+  deploymentConfig.componentIconUrl = componentIconUrl;
+  deploymentConfig.subregistryName = subregistryName;
+  deploymentConfig.subregistryDescription = subregistryDescription;
+  deploymentConfig.subregistryTags = subregistryTags;
+  deploymentConfig.subregistryIconUrl = subregistryIconUrl;
   
   return true;
 }
 
 function validateStep4() {
-  // Only validate for deploy mode
+  // Only validate for deploy mode (Instantiate step)
   if (selectedMode !== 'deploy') {
     return true;
   }
@@ -712,6 +823,178 @@ function addPaymentResourceInput() {
 
 function removePaymentResource(button) {
   button.parentElement.remove();
+}
+
+// ********** Admin dApp Definition Functions **********
+function generateAdminDappDefinitionManifest() {
+  // Get form values from admin section
+  const name = document.getElementById("adminNewDappName").value.trim();
+  const description = document.getElementById("adminNewDappDescription").value.trim();
+  const iconUrl = document.getElementById("adminNewDappIconUrl").value.trim();
+  const websitesText = document.getElementById("adminNewDappWebsites").value.trim();
+  const tagsText = document.getElementById("adminNewDappTags").value.trim();
+  
+  // Parse websites (one per line)
+  const websites = websitesText
+    .split('\n')
+    .map(w => w.trim())
+    .filter(w => w.length > 0);
+  
+  // Parse tags (comma-separated)
+  const tags = tagsText
+    .split(',')
+    .map(t => t.trim())
+    .filter(t => t.length > 0);
+  
+  // Validate
+  const validation = validateDappDefinitionParams({
+    dappAccountAddress: account?.address || 'account_tdx_2_1...',
+    name,
+    description,
+    iconUrl,
+    tags,
+    claimedWebsites: websites,
+    claimedEntities: []
+  });
+  
+  if (!validation.valid) {
+    showError("Validation errors: " + validation.errors.join(", "));
+    return;
+  }
+  
+  // Generate manifest
+  const manifest = getDappDefinitionManifest({
+    dappAccountAddress: account.address,
+    name,
+    description,
+    iconUrl,
+    tags,
+    claimedWebsites: websites,
+    claimedEntities: [],
+    networkId: currentNetwork
+  });
+  
+  // Display manifest in admin section
+  document.getElementById("adminDappManifestCode").textContent = manifest;
+  document.getElementById("adminDappManifestOutput").classList.remove('hidden');
+  
+  showSuccess("dApp definition manifest generated! Review and submit to create your dApp definition.");
+}
+
+async function submitAdminDappDefinitionManifest() {
+  if (!account) {
+    showError("Please connect your wallet first");
+    return;
+  }
+  
+  const manifest = document.getElementById("adminDappManifestCode").textContent;
+  if (!manifest) {
+    showError("No manifest to submit");
+    return;
+  }
+  
+  try {
+    showTransactionModal("Creating dApp definition...");
+    
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+    
+    if (result.isOk()) {
+      const txId = result.value.transactionIntentHash;
+      
+      // Wait for transaction confirmation
+      await waitForTransaction(txId);
+      
+      // The dApp definition address is the account address used in the manifest
+      const dappAddress = account.address;
+      
+      document.getElementById("adminCreatedDappAddress").textContent = dappAddress;
+      document.getElementById("adminDappCreationResult").classList.remove('hidden');
+      
+      hideTransactionModal();
+      showSuccess("dApp definition created successfully! Now set it on the RNS component.");
+    } else {
+      throw new Error(result.error || "Transaction failed");
+    }
+  } catch (error) {
+    hideTransactionModal();
+    showError("Failed to create dApp definition: " + error.message);
+  }
+}
+
+async function setDappDefinitionOnComponent() {
+  if (!account) {
+    showError("Please connect your wallet first");
+    return;
+  }
+  
+  if (!adminComponentAddress) {
+    showError("No component loaded");
+    return;
+  }
+  
+  if (!adminBadgeResourceAddress) {
+    showError("Admin badge resource not found");
+    return;
+  }
+  
+  const dappAddress = document.getElementById("adminExistingDappAddress").value.trim();
+  if (!dappAddress) {
+    showError("Please enter a dApp definition address");
+    return;
+  }
+  
+  // Validate address format
+  if (!dappAddress.match(/^account_(tdx|rdx|sim)(_\d+)?_[a-z0-9]+$/)) {
+    showError("Invalid dApp definition address format");
+    return;
+  }
+  
+  try {
+    showTransactionModal("Setting dApp definition on component...");
+    
+    const manifest = getUpdateDappDefinitionManifest({
+      componentAddress: adminComponentAddress,
+      adminBadgeResource: adminBadgeResourceAddress,
+      dappDefinitionAddress: dappAddress,
+      accountAddress: account.address,
+      networkId: currentNetwork
+    });
+    
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+    
+    if (result.isOk()) {
+      const txId = result.value.transactionIntentHash;
+      await waitForTransaction(txId);
+      
+      document.getElementById("adminDappDefinitionStatus").classList.remove('hidden');
+      
+      hideTransactionModal();
+      showSuccess("dApp definition set successfully! You can now proceed to burn the admin badge.");
+    } else {
+      throw new Error(result.error || "Transaction failed");
+    }
+  } catch (error) {
+    hideTransactionModal();
+    showError("Failed to set dApp definition: " + error.message);
+  }
+}
+
+async function setCreatedDappDefinitionOnComponent() {
+  const dappAddress = document.getElementById("adminCreatedDappAddress").textContent;
+  if (!dappAddress) {
+    showError("No dApp definition address found");
+    return;
+  }
+  
+  // Copy address to the existing dApp section and call set function
+  document.getElementById("adminExistingDappAddress").value = dappAddress;
+  await setDappDefinitionOnComponent();
 }
 
 // ********** Instantiation Process **********
@@ -3758,13 +4041,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!elements.step3Next) console.error("❌ step3Next element not found");
   else elements.step3Next.onclick = nextStep;
   
+  // Step 4 navigation (Instantiate)
   if (!elements.step4Back) console.error("❌ step4Back element not found");
   else elements.step4Back.onclick = previousStep;
   
   if (!elements.step4Next) console.error("❌ step4Next element not found");
   else elements.step4Next.onclick = instantiateRNSCore;
   
-  // Admin wizard step navigation (matching deployment wizard structure)
+  // Admin wizard step navigation (5 steps total)
   // Admin step navigation elements
   const adminStep1Back = document.getElementById("adminStep1Back");
   const adminStep2Back = document.getElementById("adminStep2Back");
@@ -3772,6 +4056,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const adminStep3Back = document.getElementById("adminStep3Back");
   const adminStep3Next = document.getElementById("adminStep3Next");
   const adminStep4Back = document.getElementById("adminStep4Back");
+  const adminStep4Next = document.getElementById("adminStep4Next");
+  const adminStep5Back = document.getElementById("adminStep5Back");
   const adminComplete = document.getElementById("adminComplete");
   
   // Back buttons (go back to mode selection from step 1, go back to previous step from others)
@@ -3793,8 +4079,79 @@ document.addEventListener("DOMContentLoaded", () => {
   if (adminStep4Back) adminStep4Back.onclick = () => goToAdminStep(3);
   else console.warn("⚠️ adminStep4Back element not found");
   
+  if (adminStep4Next) adminStep4Next.onclick = () => goToAdminStep(5);
+  else console.warn("⚠️ adminStep4Next element not found");
+  
+  if (adminStep5Back) adminStep5Back.onclick = () => goToAdminStep(4);
+  else console.warn("⚠️ adminStep5Back element not found");
+  
   if (adminComplete) adminComplete.onclick = completeAdminSetup;
   else console.warn("⚠️ adminComplete element not found");
+  
+  // Admin dApp Definition toggle and actions (Step 4)
+  const adminUseExistingDapp = document.getElementById("adminUseExistingDapp");
+  const adminCreateNewDapp = document.getElementById("adminCreateNewDapp");
+  const adminExistingDappSection = document.getElementById("adminExistingDappSection");
+  const adminNewDappSection = document.getElementById("adminNewDappSection");
+  
+  if (adminUseExistingDapp && adminCreateNewDapp) {
+    adminUseExistingDapp.onclick = () => {
+      adminUseExistingDapp.classList.add('active');
+      adminCreateNewDapp.classList.remove('active');
+      adminExistingDappSection.classList.remove('hidden');
+      adminNewDappSection.classList.add('hidden');
+    };
+    
+    adminCreateNewDapp.onclick = () => {
+      adminCreateNewDapp.classList.add('active');
+      adminUseExistingDapp.classList.remove('active');
+      adminNewDappSection.classList.remove('hidden');
+      adminExistingDappSection.classList.add('hidden');
+    };
+  }
+  
+  const adminSetDappDefinition = document.getElementById("adminSetDappDefinition");
+  const adminGenerateDappManifest = document.getElementById("adminGenerateDappManifest");
+  const adminCopyDappManifest = document.getElementById("adminCopyDappManifest");
+  const adminSubmitDappManifest = document.getElementById("adminSubmitDappManifest");
+  const adminSetCreatedDappDefinition = document.getElementById("adminSetCreatedDappDefinition");
+  const adminCopyCreatedDappAddress = document.getElementById("adminCopyCreatedDappAddress");
+  
+  if (adminSetDappDefinition) {
+    adminSetDappDefinition.onclick = setDappDefinitionOnComponent;
+  }
+  
+  if (adminGenerateDappManifest) {
+    adminGenerateDappManifest.onclick = generateAdminDappDefinitionManifest;
+  }
+  
+  if (adminCopyDappManifest) {
+    adminCopyDappManifest.onclick = () => {
+      const code = document.getElementById("adminDappManifestCode");
+      if (code) {
+        navigator.clipboard.writeText(code.textContent);
+        showSuccess("Manifest copied to clipboard!");
+      }
+    };
+  }
+  
+  if (adminSubmitDappManifest) {
+    adminSubmitDappManifest.onclick = submitAdminDappDefinitionManifest;
+  }
+  
+  if (adminSetCreatedDappDefinition) {
+    adminSetCreatedDappDefinition.onclick = setCreatedDappDefinitionOnComponent;
+  }
+  
+  if (adminCopyCreatedDappAddress) {
+    adminCopyCreatedDappAddress.onclick = () => {
+      const address = document.getElementById("adminCreatedDappAddress");
+      if (address) {
+        navigator.clipboard.writeText(address.textContent);
+        showSuccess("dApp definition address copied!");
+      }
+    };
+  }
   
   // Payment resources management - with error checking
   // Resource management elements

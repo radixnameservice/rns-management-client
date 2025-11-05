@@ -48,7 +48,8 @@
       <div class="tracker-step active" data-step="1">Component</div>
       <div class="tracker-step" data-step="2">Reservations</div>
       <div class="tracker-step" data-step="3">Badge Locks</div>
-      <div class="tracker-step" data-step="4">Activation</div>
+      <div class="tracker-step" data-step="4">dApp Definition</div>
+      <div class="tracker-step" data-step="5">Activation</div>
     </div>
   </div>
 
@@ -320,7 +321,7 @@
 
 
           <div class="form-section">
-            <h3>Icon URLs</h3>
+            <h3>Resource Icon URLs</h3>
             <div class="warning-box">
               <strong>⚠️ Important:</strong> Use permanent, accessible URLs for icon assets.
               Consider using IPFS, Arweave, Filecoin, or your own reliable CDN.
@@ -353,7 +354,79 @@
                 placeholder="https://your-cdn.com/registrar-badge-icon.png">
               <small class="form-help">Icon displayed for Registrar Badge NFTs</small>
             </div>
+          </div>
 
+          <div class="form-section">
+            <h3>Component Metadata</h3>
+            <p class="form-help">Configure metadata for your RNS component and subregistries</p>
+
+            <h4 style="margin-top: 20px; margin-bottom: 12px; color: #334155; font-size: 1rem;">Main Component</h4>
+            
+            <div class="form-group">
+              <label for="componentName">Component Name:</label>
+              <input id="componentName" type="text" class="form-control"
+                placeholder="e.g. Radix Name Service">
+              <small class="form-help">Display name for your RNS component</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentDescription">Component Description:</label>
+              <textarea id="componentDescription" class="form-control" rows="2"
+                placeholder="e.g. decentralized name service for the Radix network"></textarea>
+              <small class="form-help">Brief description of your RNS component</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentTags">Component Tags:</label>
+              <input id="componentTags" type="text" class="form-control"
+                placeholder="e.g. radix, domains, identity">
+              <small class="form-help">Comma-separated tags for categorization</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentInfoUrl">Component Info URL:</label>
+              <input id="componentInfoUrl" type="url" class="form-control"
+                placeholder="https://your-website-here.com">
+              <small class="form-help">Website or documentation URL for your RNS</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentIconUrl">Component Icon URL:</label>
+              <input id="componentIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/component-icon.png">
+              <small class="form-help">Icon for the RNS component itself (optional)</small>
+            </div>
+
+            <h4 style="margin-top: 24px; margin-bottom: 12px; color: #334155; font-size: 1rem;">Subregistry Metadata</h4>
+            <p class="form-help" style="margin-bottom: 12px;">These values are applied to ALL domain subregistries (same for every domain).</p>
+
+            <div class="form-group">
+              <label for="subregistryName">Subregistry Name:</label>
+              <input id="subregistryName" type="text" class="form-control"
+                placeholder="Domain Subregistry">
+              <small class="form-help">Generic name used for all subregistry components</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryDescription">Subregistry Description:</label>
+              <textarea id="subregistryDescription" class="form-control" rows="2"
+                placeholder="Manages subdomains and records for domain"></textarea>
+              <small class="form-help">Generic description used for all subregistry components</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryTags">Subregistry Tags:</label>
+              <input id="subregistryTags" type="text" class="form-control"
+                placeholder="subdomain, records">
+              <small class="form-help">Comma-separated tags for all subregistries</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryIconUrl">Subregistry Icon URL:</label>
+              <input id="subregistryIconUrl" type="url" class="form-control"
+                placeholder="https://your-cdn.com/subregistry-icon.png">
+              <small class="form-help">Icon for all subregistries (optional)</small>
+            </div>
           </div>
 
           <div class="step-navigation">
@@ -594,14 +667,146 @@
                     </div>
                   </div>
 
-        <!-- Admin Step 4: Admin Badge Management -->
+        <!-- Admin Step 4: dApp Definition -->
         <div id="adminStep4" class="step">
-          <h2>Activation</h2>
+          <h2>dApp Definition</h2>
 
           <div id="adminComponentInfo" class="form-section">
             <h3>Component</h3>
             <div class="component-info-display">
               <span id="adminComponentDisplay4" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>📱 Set dApp Definition</h3>
+            <p class="form-help" style="margin-bottom: 20px;">
+              <strong>Required before burning admin badge:</strong> Set the dApp definition to link your RNS component to a recognizable identity in wallets and dApps.
+              You can either use an existing dApp definition account or create a new one.
+            </p>
+
+            <div class="warning-box" style="margin-bottom: 20px;">
+              <strong>⚠️ Important:</strong> The dApp definition must be set before you can burn the admin badge to activate public registration.
+            </div>
+
+            <div class="dapp-options">
+              <div class="option-toggle">
+                <button id="adminUseExistingDapp" class="toggle-btn active">Use Existing</button>
+                <button id="adminCreateNewDapp" class="toggle-btn">Create New</button>
+              </div>
+
+              <!-- Use Existing dApp Definition -->
+              <div id="adminExistingDappSection" class="dapp-section">
+                <div class="form-group">
+                  <label for="adminExistingDappAddress">Existing dApp Definition Address:</label>
+                  <input id="adminExistingDappAddress" type="text" class="form-control" 
+                    placeholder="account_tdx_2_1..." autocomplete="off" spellcheck="false">
+                  <small class="form-help">Enter the account address of your existing dApp definition</small>
+                </div>
+                <button id="adminSetDappDefinition" class="btn btn-primary" style="margin-top: 12px;">
+                  Set dApp Definition on Component
+                </button>
+              </div>
+
+              <!-- Create New dApp Definition -->
+              <div id="adminNewDappSection" class="dapp-section hidden">
+                <div class="info-message" style="margin-bottom: 20px;">
+                  <p style="margin: 0;">
+                    <strong>Note:</strong> You'll first create the dApp definition, then set it on the RNS component.
+                  </p>
+                </div>
+
+                <div class="form-group">
+                  <label for="adminNewDappName">dApp Name:</label>
+                  <input id="adminNewDappName" type="text" class="form-control" placeholder="RNS V2">
+                  <small class="form-help">The display name of your dApp</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="adminNewDappDescription">Description:</label>
+                  <textarea id="adminNewDappDescription" class="form-control" rows="3" 
+                    placeholder="Radix Name Service - A decentralized naming system for the Radix network"></textarea>
+                  <small class="form-help">Brief description of your dApp</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="adminNewDappIconUrl">Icon URL:</label>
+                  <input id="adminNewDappIconUrl" type="url" class="form-control" 
+                    placeholder="https://example.com/icon.png">
+                  <small class="form-help">URL to your dApp's icon image</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="adminNewDappWebsites">Claimed Websites:</label>
+                  <textarea id="adminNewDappWebsites" class="form-control" rows="3" 
+                    placeholder="https://rns.foundation&#10;https://app.rns.foundation"></textarea>
+                  <small class="form-help">One website URL per line</small>
+                </div>
+
+                <div class="form-group">
+                  <label for="adminNewDappTags">Tags (optional):</label>
+                  <input id="adminNewDappTags" type="text" class="form-control" 
+                    placeholder="naming, dns, identity">
+                  <small class="form-help">Comma-separated tags to categorize your dApp</small>
+                </div>
+
+                <button id="adminGenerateDappManifest" class="btn btn-accent" style="margin-top: 12px;">
+                  Generate dApp Definition Manifest
+                </button>
+
+                <div id="adminDappManifestOutput" class="manifest-output hidden" style="margin-top: 20px;">
+                  <h4>Step 1: Create dApp Definition</h4>
+                  <div class="manifest-display">
+                    <pre id="adminDappManifestCode"></pre>
+                    <button class="btn-copy" id="adminCopyDappManifest">Copy Manifest</button>
+                  </div>
+                  <button id="adminSubmitDappManifest" class="btn btn-primary" style="margin-top: 12px;">
+                    Submit to Wallet
+                  </button>
+
+                  <div id="adminDappCreationResult" class="result-output hidden" style="margin-top: 20px;">
+                    <div class="success-message">
+                      <strong>✅ dApp Definition Created!</strong>
+                      <div style="margin-top: 12px;">
+                        <label>dApp Definition Address:</label>
+                        <div style="display: flex; gap: 8px; margin-top: 4px;">
+                          <code id="adminCreatedDappAddress" style="flex: 1; background: rgba(255,255,255,0.05); padding: 8px; border-radius: 4px;"></code>
+                          <button class="btn-copy" id="adminCopyCreatedDappAddress">Copy</button>
+                        </div>
+                      </div>
+                      <button id="adminSetCreatedDappDefinition" class="btn btn-primary" style="margin-top: 12px;">
+                        Set This dApp Definition on Component
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="adminDappDefinitionStatus" class="result-output hidden" style="margin-top: 24px;">
+              <div class="success-message">
+                <strong>✅ dApp Definition Set Successfully!</strong>
+                <p style="margin-top: 8px; margin-bottom: 0;">The dApp definition has been configured on the RNS component. You can now proceed to burn the admin badge.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="step-navigation">
+            <button id="adminStep4Back" class="btn btn-secondary">← Back</button>
+            <button id="adminStep4Next" class="btn btn-primary">Continue →</button>
+          </div>
+        </div>
+
+        <!-- Admin Step 5: Admin Badge Management -->
+        <div id="adminStep5" class="step">
+          <h2>Activation</h2>
+
+          <div id="adminComponentInfo" class="form-section">
+            <h3>Component</h3>
+            <div class="component-info-display">
+              <span id="adminComponentDisplay5" class="address-value"></span>
               <button class="btn-copy"
                 onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
               </div>
@@ -633,7 +838,7 @@
           </div>
 
           <div class="step-navigation">
-            <button id="adminStep4Back" class="btn btn-secondary">← Back</button>
+            <button id="adminStep5Back" class="btn btn-secondary">← Back</button>
             <button id="adminComplete" class="btn btn-success">Return to Mode Selection</button>
           </div>
         </div>
