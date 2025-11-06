@@ -48,7 +48,7 @@
       <div class="tracker-step active" data-step="1">Component</div>
       <div class="tracker-step" data-step="2">Reservations</div>
       <div class="tracker-step" data-step="3">Badge Locks</div>
-      <div class="tracker-step" data-step="4">dApp Definition</div>
+      <div class="tracker-step" data-step="4">Definition</div>
       <div class="tracker-step" data-step="5">Activation</div>
     </div>
   </div>
@@ -63,7 +63,7 @@
           <p>Choose your action and connect your Radix wallet to proceed.</p>
           <div class="gate-features">
             <p style="margin-bottom: 16px; color: #fff; line-height: 1.6;">
-              The Radix Name Service (RNS) V2 Manager is a comprehensive application for deploying, configuring, and managing RNS V2 components on the Radix network. Whether you're instantiating a new naming service, administering existing components, monitoring statistics, or building dApp definitions, this tool provides an intuitive interface for all your RNS operations.
+              The Radix Name Service (RNS) V2 Manager is a comprehensive application for deploying, configuring, and managing RNS V2 components on the Radix network. Whether you're instantiating a new name service, administering existing components, monitoring statistics, or building dApp definitions, this tool provides an intuitive interface for all your RNS operations.
             </p>
             <p style="color: #fff; line-height: 1.6;">
               Connect your wallet to access deployment wizards, component configuration tools, registrar management, and real-time analytics for both Stokenet and Mainnet networks.
@@ -720,35 +720,28 @@
 
                 <div class="form-group">
                   <label for="adminNewDappName">dApp Name:</label>
-                  <input id="adminNewDappName" type="text" class="form-control" placeholder="RNS V2">
+                  <input id="adminNewDappName" type="text" class="form-control" placeholder="e.g. RNS V2">
                   <small class="form-help">The display name of your dApp</small>
                 </div>
 
                 <div class="form-group">
                   <label for="adminNewDappDescription">Description:</label>
                   <textarea id="adminNewDappDescription" class="form-control" rows="3" 
-                    placeholder="Radix Name Service - A decentralized naming system for the Radix network"></textarea>
+                    placeholder="e.g. Radix Name Service - A decentralised name system for the Radix network"></textarea>
                   <small class="form-help">Brief description of your dApp</small>
                 </div>
 
                 <div class="form-group">
                   <label for="adminNewDappIconUrl">Icon URL:</label>
                   <input id="adminNewDappIconUrl" type="url" class="form-control" 
-                    placeholder="https://example.com/icon.png">
+                    placeholder="e.g. https://example.com/icon.png">
                   <small class="form-help">URL to your dApp's icon image</small>
-                </div>
-
-                <div class="form-group">
-                  <label for="adminNewDappWebsites">Claimed Websites:</label>
-                  <textarea id="adminNewDappWebsites" class="form-control" rows="3" 
-                    placeholder="https://rns.foundation&#10;https://app.rns.foundation"></textarea>
-                  <small class="form-help">One website URL per line</small>
                 </div>
 
                 <div class="form-group">
                   <label for="adminNewDappTags">Tags (optional):</label>
                   <input id="adminNewDappTags" type="text" class="form-control" 
-                    placeholder="naming, dns, identity">
+                    placeholder="e.g. rns, identity">
                   <small class="form-help">Comma-separated tags to categorize your dApp</small>
                 </div>
 
@@ -948,13 +941,13 @@
               <h4>Basic Information</h4><br />
               <div class="form-group">
                 <label for="dappAccountAddress">dApp Account Address:</label>
-                <input id="dappAccountAddress" type="text" class="form-control" placeholder="account_tdx_2_1..." autocomplete="off" spellcheck="false">
+                <input id="dappAccountAddress" type="text" class="form-control" placeholder="e.g. account_tdx_2_1..." autocomplete="off" spellcheck="false">
                 <small class="form-help">An account you own that will become the dApp definition (create one in your wallet first)</small>
               </div>
 
               <div class="form-group">
                 <label for="dappName">dApp Name:</label>
-                <input id="dappName" type="text" class="form-control" placeholder="My Radix dApp">
+                <input id="dappName" type="text" class="form-control" placeholder="e.g. My Radix dApp">
                 <small class="form-help">The display name of your dApp</small>
               </div>
 
@@ -966,21 +959,21 @@
 
               <div class="form-group">
                 <label for="dappIconUrl">Icon URL:</label>
-                <input id="dappIconUrl" type="url" class="form-control" placeholder="https://example.com/icon.png">
+                <input id="dappIconUrl" type="url" class="form-control" placeholder="e.g. https://example.com/icon.png">
                 <small class="form-help">URL to your dApp's icon image</small>
               </div>
 
               <div class="form-group">
                 <label for="dappTags">Tags:</label>
-                <input id="dappTags" type="text" class="form-control" placeholder="defi, nft, exchange">
+                <input id="dappTags" type="text" class="form-control" placeholder="e.g. defi, nft, exchange">
                 <small class="form-help">Comma-separated tags to categorize your dApp</small>
               </div>
 
-              <h4 style="margin-top: 24px;">Claimed Websites</h4>
-            <p class="form-help">Enter the website URLs associated with your dApp (one per line)</p>
+              <h4 style="margin-top: 24px;">Claimed Websites (Optional)</h4>
+            <p class="form-help">Optionally specify website URLs to link to your dApp definition (one per line). Leave empty for universal access.</p>
             <div class="form-group">
-              <textarea id="dappWebsites" class="form-control" rows="4" placeholder="https://example.com&#10;https://app.example.com"></textarea>
-              <small class="form-help">These websites will be officially linked to your dApp definition</small>
+              <textarea id="dappWebsites" class="form-control" rows="4" placeholder="e.g. https://example.com&#10;https://app.example.com (or leave empty)"></textarea>
+              <small class="form-help">Empty = dApp works from any website without restrictions</small>
             </div>
 
             <div class="form-actions">

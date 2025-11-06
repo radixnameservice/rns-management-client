@@ -809,20 +809,16 @@ function generateAdminDappDefinitionManifest() {
   const name = document.getElementById("adminNewDappName").value.trim();
   const description = document.getElementById("adminNewDappDescription").value.trim();
   const iconUrl = document.getElementById("adminNewDappIconUrl").value.trim();
-  const websitesText = document.getElementById("adminNewDappWebsites").value.trim();
   const tagsText = document.getElementById("adminNewDappTags").value.trim();
-  
-  // Parse websites (one per line)
-  const websites = websitesText
-    .split('\n')
-    .map(w => w.trim())
-    .filter(w => w.length > 0);
-  
+
   // Parse tags (comma-separated)
   const tags = tagsText
     .split(',')
     .map(t => t.trim())
     .filter(t => t.length > 0);
+  
+  // No websites - using empty array for universal access
+  const claimedWebsites = [];
   
   // Validate
   const validation = validateDappDefinitionParams({
@@ -831,7 +827,7 @@ function generateAdminDappDefinitionManifest() {
     description,
     iconUrl,
     tags,
-    claimedWebsites: websites,
+    claimedWebsites,
     claimedEntities: []
   });
   
@@ -847,7 +843,7 @@ function generateAdminDappDefinitionManifest() {
     description,
     iconUrl,
     tags,
-    claimedWebsites: websites,
+    claimedWebsites,
     claimedEntities: [],
     networkId: currentNetwork
   });
