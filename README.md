@@ -9,19 +9,22 @@ A comprehensive web application for deploying, configuring, and managing Radix N
 ### 📦 Instantiate New RNS
 Deploy a fresh RNS V2 component to Stokenet or Mainnet with a complete guided wizard:
 - **Package Setup**: Deploy new packages or use existing ones
-- **Resource Configuration**: Configure payment tokens, legacy resources, and V1 badges
-- **Icon Customization**: Set custom icons for domains, admin badges, and registrar badges
+- **Prerequisites**: Configure payment tokens, legacy resources, V1 badges, and component metadata
+- **Component Metadata**: Set name, description, tags, info URL, and icon for the main component
+- **Subregistry Metadata**: Define metadata templates for all domain subregistries
+- **dApp Definition**: Automatically created during instantiation (uses component metadata, only icon URL differs)
+- **Icon Customization**: Set custom icons for domains, admin badges, config badges, registrar badges, and dApp definition
 - **Transaction Preview**: Review manifest before deployment
 - **Result Tracking**: Get all deployed addresses after successful instantiation
 
 ### ⚙️ Component Configuration
-Manage deployed RNS V2 components with admin privileges:
-- **Load Component**: Auto-discover connected resources
-- **Bulk Domain Upload**: Upload reserved domains in batches
-- **Domain Lookup**: Check reservation status and claimant information
-- **V1 Badge Locking**: Permanently lock V1 admin and upgrade badges
-- **Admin Badge Management**: Burn admin badges to activate public registration
-- **Pagination**: Browse all reserved domains with efficient pagination
+Manage deployed RNS V2 components with admin privileges (4-step wizard):
+- **Load Component**: Auto-discover connected resources and dApp definition address
+- **Reserved Domains**: Upload reserved domains in batches and check reservation status
+- **V1 Badge Locking**: Permanently lock V1 admin and upgrade badges to deprecate old system
+- **Activation**: Burn admin badge to activate public registration (irreversible)
+- **Domain Pagination**: Browse all reserved domains with efficient pagination
+- **Auto-Discovery**: Component address, admin badge resource, and dApp definition address are automatically detected
 
 ### 📊 RNS Statistics
 View live metrics and analytics for any RNS V2 component:
@@ -147,16 +150,19 @@ Select one of four main modes:
 
 #### Instantiate New RNS
 1. Choose to use an existing package or deploy a new one
-2. Configure payment resources and V1 legacy addresses
-3. Set icon URLs for NFTs and badges
-4. Review the transaction manifest
-5. Submit to your wallet and sign
+2. Configure payment resources, V1 legacy addresses, and resource icon URLs
+3. Set component metadata (name, description, tags, info URL, icon)
+4. Set subregistry metadata templates (applied to all domain subregistries)
+5. Set dApp definition icon URL (name, description, info URL automatically match component)
+6. Review the transaction manifest
+7. Submit to your wallet and sign
+8. dApp definition account is automatically created and linked to your component
 
 #### Component Config
-1. Enter your deployed RNS component address
-2. Upload reserved domains in bulk (CSV format: `domain.xrd,account_address`)
-3. Lock V1 badges to prevent modifications
-4. Burn admin badge to activate public registration
+1. **Load Component**: Enter your deployed RNS component address (auto-discovers admin badge and dApp definition)
+2. **Reserved Domains**: Upload reserved domains in bulk (CSV format: `domain.xrd,account_address`)
+3. **Badge Locks**: Lock V1 admin and upgrade badges to permanently deprecate V1
+4. **Activation**: Burn admin badge to activate public registration (irreversible - requires dApp definition which was auto-created during instantiation)
 
 #### RNS Statistics
 1. Enter any RNS V2 component address

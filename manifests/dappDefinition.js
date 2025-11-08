@@ -168,10 +168,8 @@ export function validateDappDefinitionParams({
     }
   }
 
-  // Validate claimed websites
-  if (claimedWebsites.length === 0) {
-    errors.push('At least one claimed website is required');
-  } else {
+  // Validate claimed websites (optional - empty array is valid for universal access)
+  if (claimedWebsites && claimedWebsites.length > 0) {
     claimedWebsites.forEach((url, index) => {
       try {
         new URL(url);

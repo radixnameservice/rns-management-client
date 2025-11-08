@@ -62,10 +62,14 @@
           <p>Choose your action and connect your Radix wallet to proceed.</p>
           <div class="gate-features">
             <p style="margin-bottom: 16px; color: #fff; line-height: 1.6;">
-              The Radix Name Service (RNS) V2 Manager is a comprehensive application for deploying, configuring, and managing RNS V2 components on the Radix network. Whether you're instantiating a new naming service, administering existing components, monitoring statistics, or building dApp definitions, this tool provides an intuitive interface for all your RNS operations.
+              The Radix Name Service (RNS) V2 Manager is a comprehensive application for deploying, configuring, and
+              managing RNS V2 components on the Radix network. Whether you're instantiating a new name service,
+              administering existing components, monitoring statistics, or building dApp definitions, this tool provides
+              an intuitive interface for all your RNS operations.
             </p>
             <p style="color: #fff; line-height: 1.6;">
-              Connect your wallet to access deployment wizards, component configuration tools, registrar management, and real-time analytics for both Stokenet and Mainnet networks.
+              Connect your wallet to access deployment wizards, component configuration tools, registrar management, and
+              real-time analytics for both Stokenet and Mainnet networks.
             </p>
           </div>
         </div>
@@ -180,16 +184,16 @@
                   <div class="step-number">2</div>
                   <div class="step-content">
                     <h4>Deploy via Developer Console</h4>
-                      <div class="deployment-instructions">
-                        <ol class="deployment-checklist">
+                    <div class="deployment-instructions">
+                      <ol class="deployment-checklist">
                         <li>Open <a id="consoleLink" href="https://stokenet-console.radixdlt.com/deploy-package"
                             target="_blank">Developer Console</a></li>
-                          <li>Connect your Radix Wallet</li>
-                          <li>Upload both <code>.wasm</code> and <code>.rpd</code> files</li>
-                          <li>Set owner role to <strong>"None"</strong> (recommended)</li>
-                          <li>Sign the deployment transaction</li>
-                          <li>Copy the resulting <strong>package address</strong></li>
-                        </ol>
+                        <li>Connect your Radix Wallet</li>
+                        <li>Upload both <code>.wasm</code> and <code>.rpd</code> files</li>
+                        <li>Set owner role to <strong>"None"</strong> (recommended)</li>
+                        <li>Sign the deployment transaction</li>
+                        <li>Copy the resulting <strong>package address</strong></li>
+                      </ol>
                     </div>
                   </div>
                 </div>
@@ -320,7 +324,7 @@
 
 
           <div class="form-section">
-            <h3>Icon URLs</h3>
+            <h3>Resource Icon URLs</h3>
             <div class="warning-box">
               <strong>⚠️ Important:</strong> Use permanent, accessible URLs for icon assets.
               Consider using IPFS, Arweave, Filecoin, or your own reliable CDN.
@@ -353,7 +357,94 @@
                 placeholder="https://your-cdn.com/registrar-badge-icon.png">
               <small class="form-help">Icon displayed for Registrar Badge NFTs</small>
             </div>
+          </div>
 
+          <div class="form-section">
+            <h3>Component Metadata</h3>
+            <p class="form-help">Configure metadata for your RNS component and subregistries</p>
+
+            <h4 style="margin-top: 20px; margin-bottom: 12px; color: #334155; font-size: 1rem;">Main Component</h4>
+
+            <div class="form-group">
+              <label for="componentName">Component Name:</label>
+              <input id="componentName" type="text" class="form-control" placeholder="e.g. Radix Name Service">
+              <small class="form-help">Display name for your RNS component</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentDescription">Component Description:</label>
+              <textarea id="componentDescription" class="form-control" rows="2"
+                placeholder="e.g. decentralized name service for the Radix network"></textarea>
+              <small class="form-help">Brief description of your RNS component</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentTags">Component Tags:</label>
+              <input id="componentTags" type="text" class="form-control" placeholder="e.g. radix, domains, identity">
+              <small class="form-help">Comma-separated tags for categorization</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentInfoUrl">Component Info URL:</label>
+              <input id="componentInfoUrl" type="url" class="form-control"
+                placeholder="e.g. https://your-website-here.com">
+              <small class="form-help">Website or documentation URL for your RNS</small>
+            </div>
+
+            <div class="form-group">
+              <label for="componentIconUrl">Component Icon URL:</label>
+              <input id="componentIconUrl" type="url" class="form-control"
+                placeholder="e.g. https://your-cdn.com/component-icon.png">
+              <small class="form-help">Icon for the RNS component itself (optional)</small>
+            </div>
+
+            <h4 style="margin-top: 24px; margin-bottom: 12px; color: #334155; font-size: 1rem;">Subregistry Metadata
+            </h4>
+            <p class="form-help" style="margin-bottom: 12px;">These values are applied to ALL domain subregistries (same
+              for every domain).</p>
+
+            <div class="form-group">
+              <label for="subregistryName">Subregistry Name:</label>
+              <input id="subregistryName" type="text" class="form-control" placeholder="e.g. Domain Subregistry">
+              <small class="form-help">Generic name used for all subregistry components</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryDescription">Subregistry Description:</label>
+              <textarea id="subregistryDescription" class="form-control" rows="2"
+                placeholder="e.g. Manages subdomains and records for domain"></textarea>
+              <small class="form-help">Generic description used for all subregistry components</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryTags">Subregistry Tags:</label>
+              <input id="subregistryTags" type="text" class="form-control" placeholder="e.g. subdomain, records">
+              <small class="form-help">Comma-separated tags for all subregistries</small>
+            </div>
+
+            <div class="form-group">
+              <label for="subregistryIconUrl">Subregistry Icon URL:</label>
+              <input id="subregistryIconUrl" type="url" class="form-control"
+                placeholder="e.g. https://your-cdn.com/subregistry-icon.png">
+              <small class="form-help">Icon for all subregistries (optional)</small>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>dApp Definition Configuration</h3>
+            <div class="info-message" style="margin-bottom: 16px;">
+              <p style="margin: 0;">
+                A dApp definition account will be automatically created during instantiation and linked to your RNS
+                component. The dApp definition will use the same name, description, and info URL as your component.
+              </p>
+            </div>
+
+            <div class="form-group">
+              <label for="dappDefinitionIconUrl">dApp Icon URL:</label>
+              <input id="dappDefinitionIconUrl" type="url" class="form-control"
+                placeholder="e.g. https://your-cdn.com/dapp-icon.png">
+              <small class="form-help">Icon for your dApp definition (usually the same as component icon)</small>
+            </div>
           </div>
 
           <div class="step-navigation">
@@ -366,73 +457,73 @@
         <div id="step4" class="step">
           <h2>Step 4: Instantiate</h2>
 
-            <div class="config-summary">
-              <h3>Instantiation Summary</h3>
-              <div id="configSummary"></div>
-            </div>
+          <div class="config-summary">
+            <h3>Instantiation Summary</h3>
+            <div id="configSummary"></div>
+          </div>
 
-            <div class="manifest-preview">
-              <h3>Transaction Manifest Preview</h3>
-              <pre id="manifestPreview" class="code-block"></pre>
-            </div>
+          <div class="manifest-preview">
+            <h3>Transaction Manifest Preview</h3>
+            <pre id="manifestPreview" class="code-block"></pre>
+          </div>
 
-            <div class="deploy-section">
+          <div class="deploy-section">
             <button id="step4Back" class="btn btn-secondary">← Back</button>
             <button id="step4Next" class="btn btn-primary">Instantiate RNS V2</button>
-            </div>
+          </div>
 
           <div id="deploymentStatus" class="status-container hidden">
-              <div class="spinner"></div>
+            <div class="spinner"></div>
             <p>Instantiating RNS V2...</p>
-            </div>
-
-            <div id="deploymentResult" class="result-container hidden">
-              <div class="success-icon">✅</div>
-              <h3>Instantiation Successful!</h3>
-              <div class="result-details">
-                <div class="result-item">
-                  <label>Component Address:</label>
-                  <span id="resultComponentAddress" class="address-value"></span>
-                  <button class="btn-copy">Copy</button>
-                </div>
-                <div class="result-item">
-                  <label>Admin Badge Resource:</label>
-                  <span id="resultAdminBadgeResource" class="address-value"></span>
-                  <button class="btn-copy">Copy</button>
-                </div>
-                <div class="result-item">
-                  <label>Domain Resource:</label>
-                  <span id="resultDomainResource" class="address-value"></span>
-                  <button class="btn-copy">Copy</button>
-                </div>
-              </div>
-              <button id="goToAdmin" class="btn btn-primary">Go to Component Config →</button>
-            </div>
           </div>
-        </div> <!-- Close application flow -->
-      </div>
 
-    <!-- Hidden Admin Content - COMPLETE FRESH COPY OF DEPLOYMENT WIZARD STRUCTURE -->
-      <div id="adminContent" class="content-section hidden">
-        <!-- Admin Wallet Connection Gate -->
-        <div id="adminWalletGate" class="wallet-gate">
-          <div class="gate-content">
-            <h2>👨‍💼 Connect Your Wallet for Admin Access</h2>
-          <p>Access the component config to manage your deployed RNS V2 component.</p>
-            <div class="gate-features">
-              <h3>Component Config Features:</h3>
-              <ul>
-              <li>✅ Load and manage RNS components</li>
-                <li>✅ Bulk upload reserved domains</li>
-                <li>✅ Lock V1 admin and upgrade badges</li>
-                <li>✅ Burn admin badges to activate public registration</li>
-              </ul>
+          <div id="deploymentResult" class="result-container hidden">
+            <div class="success-icon">✅</div>
+            <h3>Instantiation Successful!</h3>
+            <div class="result-details">
+              <div class="result-item">
+                <label>Component Address:</label>
+                <span id="resultComponentAddress" class="address-value"></span>
+                <button class="btn-copy">Copy</button>
+              </div>
+              <div class="result-item">
+                <label>Admin Badge Resource:</label>
+                <span id="resultAdminBadgeResource" class="address-value"></span>
+                <button class="btn-copy">Copy</button>
+              </div>
+              <div class="result-item">
+                <label>Domain Resource:</label>
+                <span id="resultDomainResource" class="address-value"></span>
+                <button class="btn-copy">Copy</button>
+              </div>
             </div>
-            <div class="connect-prompt">
-              <p class="connect-help">Use the connect button in the header above to access admin features</p>
-            </div>
+            <button id="goToAdmin" class="btn btn-primary">Go to Component Config →</button>
           </div>
         </div>
+      </div> <!-- Close application flow -->
+    </div>
+
+    <!-- Hidden Admin Content - COMPLETE FRESH COPY OF DEPLOYMENT WIZARD STRUCTURE -->
+    <div id="adminContent" class="content-section hidden">
+      <!-- Admin Wallet Connection Gate -->
+      <div id="adminWalletGate" class="wallet-gate">
+        <div class="gate-content">
+          <h2>👨‍💼 Connect Your Wallet for Admin Access</h2>
+          <p>Access the component config to manage your deployed RNS V2 component.</p>
+          <div class="gate-features">
+            <h3>Component Config Features:</h3>
+            <ul>
+              <li>✅ Load and manage RNS components</li>
+              <li>✅ Bulk upload reserved domains</li>
+              <li>✅ Lock V1 admin and upgrade badges</li>
+              <li>✅ Burn admin badges to activate public registration</li>
+            </ul>
+          </div>
+          <div class="connect-prompt">
+            <p class="connect-help">Use the connect button in the header above to access admin features</p>
+          </div>
+        </div>
+      </div>
 
       <!-- Admin Flow (EXACT COPY OF applicationFlow STRUCTURE) -->
       <div id="adminFlow" class="application-flow hidden">
@@ -445,8 +536,10 @@
             <h3>📍 RNS Component Address</h3>
             <div class="form-group">
               <label for="adminComponentAddress">Component Address:</label>
-              <input id="adminComponentAddress" name="component-address" type="text" class="form-control" placeholder="" autocomplete="component-address" spellcheck="false">
-              <small class="form-help">Paste the component address of the deployed component (instantiated RNS V2 package) - connected resources will be auto-discovered</small>
+              <input id="adminComponentAddress" name="component-address" type="text" class="form-control" placeholder=""
+                autocomplete="component-address" spellcheck="false">
+              <small class="form-help">Paste the component address of the deployed component (instantiated RNS V2
+                package) - connected resources will be auto-discovered</small>
             </div>
           </div>
 
@@ -462,9 +555,16 @@
           <div id="adminComponentInfo" class="form-section hidden">
             <h3>Component</h3>
             <div class="component-info-display">
+              <label>Address:</label>
               <span id="adminComponentDisplay" class="address-value"></span>
               <button class="btn-copy"
                 onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
+            </div>
+            <div class="component-info-display hidden">
+              <label>dApp Definition:</label>
+              <span id="adminDappDefDisplay" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay').textContent)">Copy</button>
             </div>
           </div>
 
@@ -473,12 +573,12 @@
             <p class="form-help">Upload reserved domains in batches. You can upload multiple times before proceeding to
               the next step.</p>
 
-                <div class="form-group">
+            <div class="form-group">
               <label for="reservedDomainsText">Domains List:</label>
               <textarea id="reservedDomainsText" class="form-control" rows="8"
                 placeholder="example.xrd,account_tdx_2_1c8...&#10;radix.xrd,account_tdx_2_1c8...&#10;domain.xrd,account_tdx_2_1c8..."></textarea>
-                  <small class="form-help">Format: domain.xrd,account_address (one per line)</small>
-                </div>
+              <small class="form-help">Format: domain.xrd,account_address (one per line)</small>
+            </div>
 
             <div id="reservedDomainsPreview" class="preview-section hidden">
               <h4>Upload Preview</h4>
@@ -486,10 +586,10 @@
             </div>
 
             <div class="bulk-upload-actions">
-                  <button id="previewReservedDomains" class="btn btn-secondary">Preview Upload</button>
-                  <button id="uploadReservedDomains" class="btn btn-primary" disabled>Upload Reserved Domains</button>
-                </div>
-              </div>
+              <button id="previewReservedDomains" class="btn btn-secondary">Preview Upload</button>
+              <button id="uploadReservedDomains" class="btn btn-primary" disabled>Upload Reserved Domains</button>
+            </div>
+          </div>
 
           <div id="uploadedDomainsSection" class="form-section hidden">
             <h3>Recently Uploaded Domains</h3>
@@ -513,7 +613,7 @@
               <h4>Lookup Result</h4>
               <div id="domainLookupDetails" class="preview-results"></div>
             </div>
-              </div>
+          </div>
 
           <div class="form-section">
             <h3>All Reserved Domains</h3>
@@ -541,14 +641,14 @@
                 <span id="pageInfo">Page 1</span>
                 <button id="nextPageBtn" class="btn btn-secondary" disabled>Next →</button>
               </div>
-              </div>
             </div>
+          </div>
 
           <div class="step-navigation">
             <button id="adminStep2Back" class="btn btn-secondary">← Back</button>
             <button id="adminStep2Next" class="btn btn-primary">Continue →</button>
-                </div>
-                </div>
+          </div>
+        </div>
 
         <!-- Admin Step 3: V1 Badge Locking -->
         <div id="adminStep3" class="step">
@@ -557,11 +657,18 @@
           <div id="adminComponentInfo" class="form-section">
             <h3>Component</h3>
             <div class="component-info-display">
+              <label>Address:</label>
               <span id="adminComponentDisplay3" class="address-value"></span>
               <button class="btn-copy"
-                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
-              </div>
-                </div>
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay3').textContent)">Copy</button>
+            </div>
+            <div class="component-info-display hidden">
+              <label>dApp Definition:</label>
+              <span id="adminDappDefDisplay3" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay3').textContent)">Copy</button>
+            </div>
+          </div>
 
           <div class="form-section">
             <h3>Lock V1 Admin Badges</h3>
@@ -570,50 +677,57 @@
             <div id="adminBadgeStatus" class="status-display"></div>
 
             <button id="lockAdminBadges" class="btn btn-warning">Lock All Admin Badges from Wallet</button>
-                  </div>
+          </div>
 
-                  <div class="form-section">
+          <div class="form-section">
             <h3>Lock V1 Upgrade Badges</h3>
             <p class="form-help">Lock upgrade badges to prevent service modifications.</p>
 
             <div id="upgradeBadgeStatus" class="status-display"></div>
 
             <button id="lockUpgradeBadge" class="btn btn-warning">Lock All Upgrade Badges from Wallet</button>
-                  </div>
+          </div>
 
-                  <div class="form-section">
+          <div class="form-section">
             <h3>V1 Lock Status Summary</h3>
             <p class="form-help">Overall status of V1 badge locking for RNS V2 launch validation.</p>
             <div id="lockStatusResults" class="status-display"></div>
             <button id="refreshLockStatus" class="btn btn-secondary">Refresh Status</button>
-                  </div>
+          </div>
 
           <div class="step-navigation">
             <button id="adminStep3Back" class="btn btn-secondary">← Back</button>
             <button id="adminStep3Next" class="btn btn-primary">Continue →</button>
-                    </div>
-                  </div>
+          </div>
+        </div>
 
-        <!-- Admin Step 4: Admin Badge Management -->
+        <!-- Admin Step 4: Activation -->
         <div id="adminStep4" class="step">
           <h2>Activation</h2>
 
           <div id="adminComponentInfo" class="form-section">
             <h3>Component</h3>
             <div class="component-info-display">
+              <label>Address:</label>
               <span id="adminComponentDisplay4" class="address-value"></span>
               <button class="btn-copy"
-                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay').textContent)">Copy</button>
-              </div>
+                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay4').textContent)">Copy</button>
             </div>
+            <div class="component-info-display hidden">
+              <label>dApp Definition:</label>
+              <span id="adminDappDefDisplay4" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay4').textContent)">Copy</button>
+            </div>
+          </div>
 
           <div class="form-section danger-zone">
             <h3>🔥 Burn Admin Badge</h3>
-            
+
             <p class="form-help" style="margin-bottom: 20px; font-size: 15px; line-height: 1.6;">
-              Burning the admin badge is the <strong>final step to launch RNS V2 for public use</strong>. 
-              This action permanently destroys the admin badge, which removes all privileged access and 
-              activates public domain registration. Once burned, the RNS system becomes fully decentralized 
+              Burning the admin badge is the <strong>final step to launch RNS V2 for public use</strong>.
+              This action permanently destroys the admin badge, which removes all privileged access and
+              activates public domain registration. Once burned, the RNS system becomes fully decentralized
               and permissionless.
             </p>
 
@@ -627,8 +741,10 @@
             </div>
 
             <div id="burnCompletionMessage" class="success-message hidden" style="margin-top: 20px;">
-              <div style="font-size: 18px; margin-bottom: 10px;">✅ <strong>Admin Badge Burned Successfully!</strong></div>
-              <p style="margin: 0;">Public domain registration is now active. The RNS V2 system is fully decentralized and permissionless.</p>
+              <div style="font-size: 18px; margin-bottom: 10px;">✅ <strong>Admin Badge Burned Successfully!</strong>
+              </div>
+              <p style="margin: 0;">Public domain registration is now active. The RNS V2 system is fully decentralized
+                and permissionless.</p>
             </div>
           </div>
 
@@ -639,47 +755,48 @@
         </div>
 
       </div> <!-- Close adminFlow -->
-      </div>
+    </div>
 
-      <!-- Hidden Manage Content (will be shown in mode selection) -->
-      <div id="manageContent" class="content-section hidden">
-        <!-- Manage Wallet Connection Gate -->
-        <div id="manageWalletGate" class="wallet-gate">
-          <div class="gate-content">
+    <!-- Hidden Manage Content (will be shown in mode selection) -->
+    <div id="manageContent" class="content-section hidden">
+      <!-- Manage Wallet Connection Gate -->
+      <div id="manageWalletGate" class="wallet-gate">
+        <div class="gate-content">
           <h2>📊 Connect Your Wallet to View RNS Statistics</h2>
           <p>View live metrics and analytics for any RNS V2 component.</p>
-            <div class="gate-features">
+          <div class="gate-features">
             <h3>Available Statistics:</h3>
             <ul>
               <li>✅ Total domains issued (V2)</li>
               <li>✅ Domains migrated from V1</li>
               <li>✅ Unique user count</li>
               <li>✅ Component address lookup</li>
-              </ul>
-            </div>
-            <div class="connect-prompt">
+            </ul>
+          </div>
+          <div class="connect-prompt">
             <p class="connect-help">Use the connect button in the header above to view statistics</p>
-            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Management Panel (Hidden until wallet connected) -->
+      <div id="managementPanel" class="management-panel hidden">
+        <div class="admin-nav">
+          <button id="manageBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
+        </div>
+        <h2>RNS Statistics Dashboard</h2>
+
+        <div class="component-search">
+          <div class="form-group">
+            <label for="searchComponentAddress">Component Address:</label>
+            <input id="searchComponentAddress" name="component-address" type="text" class="form-control" placeholder=""
+              autocomplete="component-address" spellcheck="false">
+            <button id="searchComponent" class="btn btn-primary">Load Component</button>
           </div>
         </div>
 
-        <!-- Management Panel (Hidden until wallet connected) -->
-        <div id="managementPanel" class="management-panel hidden">
-          <div class="admin-nav">
-            <button id="manageBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
-          </div>
-        <h2>RNS Statistics Dashboard</h2>
-
-          <div class="component-search">
-            <div class="form-group">
-              <label for="searchComponentAddress">Component Address:</label>
-            <input id="searchComponentAddress" name="component-address" type="text" class="form-control" placeholder="" autocomplete="component-address" spellcheck="false">
-              <button id="searchComponent" class="btn btn-primary">Load Component</button>
-            </div>
-          </div>
-
-          <div id="componentDetails" class="component-details hidden">
-            <div id="componentInfo" class="info-grid"></div>
+        <div id="componentDetails" class="component-details hidden">
+          <div id="componentInfo" class="info-grid"></div>
         </div>
       </div>
     </div>
@@ -716,7 +833,8 @@
         <div class="component-search">
           <div class="form-group">
             <label for="toolsComponentAddress">RNS V2 Component Address:</label>
-            <input id="toolsComponentAddress" name="component-address" type="text" class="form-control" placeholder="component_tdx_2_1..." autocomplete="component-address" spellcheck="false">
+            <input id="toolsComponentAddress" name="component-address" type="text" class="form-control"
+              placeholder="component_tdx_2_1..." autocomplete="component-address" spellcheck="false">
             <button id="loadToolsComponent" class="btn btn-primary">Load Component</button>
           </div>
         </div>
@@ -737,85 +855,92 @@
             <span class="expand-icon">▼</span>
           </div>
           <p class="tool-description">Generate a dApp definition account with proper metadata and claimed entities.</p>
-          
+
           <div class="tool-content" id="dappDefinitionContent">
             <div class="form-section">
               <h4>Basic Information</h4><br />
               <div class="form-group">
                 <label for="dappAccountAddress">dApp Account Address:</label>
-                <input id="dappAccountAddress" type="text" class="form-control" placeholder="account_tdx_2_1..." autocomplete="off" spellcheck="false">
-                <small class="form-help">An account you own that will become the dApp definition (create one in your wallet first)</small>
+                <input id="dappAccountAddress" type="text" class="form-control" placeholder="e.g. account_tdx_2_1..."
+                  autocomplete="off" spellcheck="false">
+                <small class="form-help">An account you own that will become the dApp definition (create one in your
+                  wallet first)</small>
               </div>
 
               <div class="form-group">
                 <label for="dappName">dApp Name:</label>
-                <input id="dappName" type="text" class="form-control" placeholder="My Radix dApp">
+                <input id="dappName" type="text" class="form-control" placeholder="e.g. My Radix dApp">
                 <small class="form-help">The display name of your dApp</small>
               </div>
 
               <div class="form-group">
                 <label for="dappDescription">Description:</label>
-                <textarea id="dappDescription" class="form-control" rows="3" placeholder="A brief description of what your dApp does"></textarea>
+                <textarea id="dappDescription" class="form-control" rows="3"
+                  placeholder="A brief description of what your dApp does"></textarea>
                 <small class="form-help">Describe your dApp's purpose and features</small>
               </div>
 
               <div class="form-group">
                 <label for="dappIconUrl">Icon URL:</label>
-                <input id="dappIconUrl" type="url" class="form-control" placeholder="https://example.com/icon.png">
+                <input id="dappIconUrl" type="url" class="form-control" placeholder="e.g. https://example.com/icon.png">
                 <small class="form-help">URL to your dApp's icon image</small>
               </div>
 
               <div class="form-group">
                 <label for="dappTags">Tags:</label>
-                <input id="dappTags" type="text" class="form-control" placeholder="defi, nft, exchange">
+                <input id="dappTags" type="text" class="form-control" placeholder="e.g. defi, nft, exchange">
                 <small class="form-help">Comma-separated tags to categorize your dApp</small>
               </div>
 
-              <h4 style="margin-top: 24px;">Claimed Websites</h4>
-            <p class="form-help">Enter the website URLs associated with your dApp (one per line)</p>
-            <div class="form-group">
-              <textarea id="dappWebsites" class="form-control" rows="4" placeholder="https://example.com&#10;https://app.example.com"></textarea>
-              <small class="form-help">These websites will be officially linked to your dApp definition</small>
-            </div>
+              <h4 style="margin-top: 24px;">Claimed Websites (Optional)</h4>
+              <p class="form-help">Optionally specify website URLs to link to your dApp definition (one per line). Leave
+                empty for universal access.</p>
+              <div class="form-group">
+                <textarea id="dappWebsites" class="form-control" rows="4"
+                  placeholder="e.g. https://example.com&#10;https://app.example.com (or leave empty)"></textarea>
+                <small class="form-help">Empty = dApp works from any website without restrictions</small>
+              </div>
 
-            <div class="form-actions">
-              <button id="previewDappManifest" class="btn btn-primary">Preview Manifest</button>
-            </div>
-          </div>
-
-          <div id="dappManifestOutput" class="manifest-output hidden">
-            <h4>Preview</h4>
-            
-            <div id="discoveredEntities" class="form-section">
-              <h5>Discovered Entities</h5>
-              <div id="entitiesList" class="entities-list"></div>
-              <p class="form-help" style="margin-top: 12px;">These addresses will be claimed by your dApp definition</p>
-            </div>
-
-            <h5 style="margin-top: 20px;">Transaction Manifest</h5>
-            <div class="manifest-display">
-              <pre id="dappManifestCode"></pre>
-              <button class="btn-copy" id="copyDappManifest">Copy Manifest</button>
-            </div>
-            <div class="manifest-info">
-              <p><strong>⚠️ Important:</strong> This manifest will create a new account as your dApp definition. Save the account address after submission!</p>
-            </div>
-
-            <div class="form-actions" style="margin-top: 20px;">
-              <button id="submitDappDefinition" class="btn btn-success">Submit to Wallet</button>
-            </div>
-          </div>
-
-          <div id="dappDefinitionResult" class="result-output hidden">
-            <h4>dApp Definition Created</h4>
-            <div class="info-card">
-              <div class="info-row">
-                <span class="info-label">dApp Definition Address:</span>
-                <span class="info-value address-value" id="dappDefinitionAddress"></span>
-                <button class="btn-copy" id="copyDappAddress">Copy</button>
+              <div class="form-actions">
+                <button id="previewDappManifest" class="btn btn-primary">Preview Manifest</button>
               </div>
             </div>
-          </div>
+
+            <div id="dappManifestOutput" class="manifest-output hidden">
+              <h4>Preview</h4>
+
+              <div id="discoveredEntities" class="form-section">
+                <h5>Discovered Entities</h5>
+                <div id="entitiesList" class="entities-list"></div>
+                <p class="form-help" style="margin-top: 12px;">These addresses will be claimed by your dApp definition
+                </p>
+              </div>
+
+              <h5 style="margin-top: 20px;">Transaction Manifest</h5>
+              <div class="manifest-display">
+                <pre id="dappManifestCode"></pre>
+                <button class="btn-copy" id="copyDappManifest">Copy Manifest</button>
+              </div>
+              <div class="manifest-info">
+                <p><strong>⚠️ Important:</strong> This manifest will create a new account as your dApp definition. Save
+                  the account address after submission!</p>
+              </div>
+
+              <div class="form-actions" style="margin-top: 20px;">
+                <button id="submitDappDefinition" class="btn btn-success">Submit to Wallet</button>
+              </div>
+            </div>
+
+            <div id="dappDefinitionResult" class="result-output hidden">
+              <h4>dApp Definition Created</h4>
+              <div class="info-card">
+                <div class="info-row">
+                  <span class="info-label">dApp Definition Address:</span>
+                  <span class="info-value address-value" id="dappDefinitionAddress"></span>
+                  <button class="btn-copy" id="copyDappAddress">Copy</button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -826,14 +951,14 @@
             <span class="expand-icon">▼</span>
           </div>
           <p class="tool-description">Request registrar badges or manage your existing registrar service.</p>
-          
+
           <div class="tool-content" id="registrarManagementContent">
-            
+
             <!-- Request New Registrar Badge -->
             <div class="form-section">
               <h4>Request Registrar Badge</h4>
               <p class="form-help">Register as a new registrar to earn fees from domain registrations</p>
-              
+
               <div class="form-group">
                 <label for="newRegistrarName">Registrar Name:</label>
                 <input id="newRegistrarName" type="text" class="form-control" placeholder="My Registrar Service">
@@ -842,7 +967,8 @@
 
               <div class="form-group">
                 <label for="newRegistrarIconUrl">Icon URL:</label>
-                <input id="newRegistrarIconUrl" type="url" class="form-control" placeholder="https://example.com/icon.png">
+                <input id="newRegistrarIconUrl" type="url" class="form-control"
+                  placeholder="https://example.com/icon.png">
                 <small class="form-help">URL to your registrar's icon image</small>
               </div>
 
@@ -854,7 +980,8 @@
 
               <div class="form-group">
                 <label for="newRegistrarFeePercentage">Fee Percentage:</label>
-                <input id="newRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1" min="0" max="100">
+                <input id="newRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1"
+                  min="0" max="100">
                 <small class="form-help">Percentage of registration fees you'll earn (0-100)</small>
               </div>
 
@@ -873,9 +1000,9 @@
             </div>
 
           </div>
-          </div>
         </div>
       </div>
+    </div>
   </main>
 
   <!-- Registrar Management Modal -->
@@ -895,7 +1022,7 @@
         <!-- Update Registrar Settings -->
         <div id="updateRegistrarSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
           <h4 style="margin-bottom: 16px; font-size: 1.1em;">Update Settings</h4>
-          
+
           <div class="form-group" style="margin-bottom: 16px;">
             <label for="updateRegistrarName">Name:</label>
             <input id="updateRegistrarName" type="text" class="form-control" placeholder="New registrar name">
@@ -903,7 +1030,8 @@
 
           <div class="form-group" style="margin-bottom: 16px;">
             <label for="updateRegistrarIconUrl">Icon URL:</label>
-            <input id="updateRegistrarIconUrl" type="url" class="form-control" placeholder="https://example.com/new-icon.png">
+            <input id="updateRegistrarIconUrl" type="url" class="form-control"
+              placeholder="https://example.com/new-icon.png">
           </div>
 
           <div class="form-group" style="margin-bottom: 16px;">
@@ -913,7 +1041,8 @@
 
           <div class="form-group" style="margin-bottom: 20px;">
             <label for="updateRegistrarFeePercentage">Fee Percentage:</label>
-            <input id="updateRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1" min="0" max="100">
+            <input id="updateRegistrarFeePercentage" type="number" class="form-control" placeholder="5.0" step="0.1"
+              min="0" max="100">
           </div>
 
           <button id="updateRegistrarSettings" class="btn btn-primary">Update Settings</button>
@@ -922,9 +1051,11 @@
         <!-- Withdraw Fees -->
         <div id="withdrawFeesSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
           <h4 style="margin-bottom: 16px; font-size: 1.1em;">Withdraw Accumulated Fees</h4>
-          <div class="info-message" style="margin-bottom: 16px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db; border-radius: 4px;">
+          <div class="info-message"
+            style="margin-bottom: 16px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db; border-radius: 4px;">
             <p style="margin: 0; font-size: 0.9em;">
-              <strong>Withdrawal Requirement:</strong> You must have issued at least 100 domains via your registrar badge before fees can be withdrawn.
+              <strong>Withdrawal Requirement:</strong> You must have issued at least 100 domains via your registrar
+              badge before fees can be withdrawn.
             </p>
           </div>
           <div id="accumulatedFeesContent" class="info-card">
@@ -935,31 +1066,33 @@
         <!-- Burn Registrar Badge -->
         <div id="burnRegistrarSection" class="form-section danger-zone" style="padding-top: 32px;">
           <h4 style="margin-bottom: 12px; font-size: 1.1em;">🔥 Burn Registrar Badge</h4>
-          <p style="margin-bottom: 16px; color: #888;">Permanently delete your registrar badge. You will no longer be a registrar and be able to earn or withdraw fees.</p>
+          <p style="margin-bottom: 16px; color: #888;">Permanently delete your registrar badge. You will no longer be a
+            registrar and be able to earn or withdraw fees.</p>
           <div class="warning-box" style="margin-bottom: 16px;">
-            <p>⚠️ <strong>Warning:</strong> This action cannot be undone. Your registrar badge will be permanently burned.</p>
+            <p>⚠️ <strong>Warning:</strong> This action cannot be undone. Your registrar badge will be permanently
+              burned.</p>
           </div>
           <button id="burnRegistrarBadge" class="btn btn-danger">Burn Registrar Badge</button>
         </div>
-          </div>
-        </div>
       </div>
+    </div>
+  </div>
 
-      <!-- Transaction Status Modal -->
-      <div id="transactionModal" class="modal hidden">
-        <div class="modal-content">
-          <div class="modal-header">
-            <h3>Transaction Status</h3>
-            <button class="modal-close">×</button>
-          </div>
-          <div class="modal-body">
-            <div id="transactionStatus" class="transaction-status">
-              <div class="spinner"></div>
-              <p>Processing transaction...</p>
-            </div>
-          </div>
+  <!-- Transaction Status Modal -->
+  <div id="transactionModal" class="modal hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Transaction Status</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body">
+        <div id="transactionStatus" class="transaction-status">
+          <div class="spinner"></div>
+          <p>Processing transaction...</p>
         </div>
       </div>
+    </div>
+  </div>
 
   <script type="module" src="main.js"></script>
 </body>

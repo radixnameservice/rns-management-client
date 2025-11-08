@@ -13,6 +13,19 @@ export const getRNSInstantiateManifest = ({
   adminBadgeIconUrl,
   configBadgeIconUrl,
   registrarBadgeIconUrl,
+  componentName = "",
+  componentDescription = "",
+  componentTags = [],
+  componentInfoUrl = "",
+  componentIconUrl = "",
+  subregistryName = "",
+  subregistryDescription = "",
+  subregistryTags = [],
+  subregistryIconUrl = "",
+  dappDefinitionName = "",
+  dappDefinitionDescription = "",
+  dappDefinitionInfoUrl = "",
+  dappDefinitionIconUrl = "",
   accountAddress,
   networkId = "stokenet" // "stokenet" or "mainnet"
 }) => {
@@ -20,6 +33,16 @@ export const getRNSInstantiateManifest = ({
   const paymentResourcesArray = paymentResources.length > 0 
     ? `Array<Address>(${paymentResources.map(addr => `Address("${addr}")`).join(', ')})`
     : "Array<Address>()";
+  
+  // Format component tags array
+  const componentTagsArray = componentTags.length > 0
+    ? `Array<String>(${componentTags.map(tag => `"${tag}"`).join(', ')})`
+    : "Array<String>()";
+    
+  // Format subregistry tags array
+  const subregistryTagsArray = subregistryTags.length > 0
+    ? `Array<String>(${subregistryTags.map(tag => `"${tag}"`).join(', ')})`
+    : "Array<String>()";
 
   return `CALL_FUNCTION
   Address("${packageAddress}")
@@ -32,7 +55,22 @@ export const getRNSInstantiateManifest = ({
   "${domainIconUrl}"
   "${adminBadgeIconUrl}"
   "${configBadgeIconUrl}"
-  "${registrarBadgeIconUrl}";
+  "${registrarBadgeIconUrl}"
+  "${componentName}"
+  "${componentDescription}"
+  ${componentTagsArray}
+  "${componentInfoUrl}"
+  "${componentIconUrl}"
+  "${subregistryName}"
+  "${subregistryDescription}"
+  ${subregistryTagsArray}
+  "${subregistryIconUrl}"
+  Tuple(
+    "${dappDefinitionName}",
+    "${dappDefinitionDescription}",
+    "${dappDefinitionInfoUrl}",
+    "${dappDefinitionIconUrl}"
+  );
 
 CALL_METHOD
   Address("${accountAddress}")

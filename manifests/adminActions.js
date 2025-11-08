@@ -182,6 +182,33 @@ CALL_METHOD
 };
 
 /**
+ * Update dApp Definition on RNS Component
+ * REQUIRED before burning admin badge
+ */
+export const getUpdateDappDefinitionManifest = ({
+  componentAddress,
+  adminBadgeResource,
+  dappDefinitionAddress,
+  accountAddress,
+  networkId = "stokenet"
+}) => {
+  return `CALL_METHOD
+  Address("${accountAddress}")
+  "create_proof_of_amount"
+  Address("${adminBadgeResource}")
+  Decimal("1");
+
+POP_FROM_AUTH_ZONE
+  Proof("admin_badge_proof");
+
+CALL_METHOD
+  Address("${componentAddress}")
+  "update_dapp_definition"
+  Proof("admin_badge_proof")
+  Address("${dappDefinitionAddress}");`;
+};
+
+/**
  * Validate admin action parameters
  */
 export const validateAdminActionParams = (params) => {

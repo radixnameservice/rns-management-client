@@ -47,6 +47,7 @@ let selectedPackageOption = null; // 'existing' or 'new'
 let deploymentConfig = {};
 let adminComponentAddress = null;
 let adminBadgeResourceAddress = null;
+let adminDappDefinitionAddress = null;
 let uploadedDomainsInSession = []; // Track domains uploaded in this session
 let allReservedDomains = []; // All reserved domains from component
 let v1AdminBadgeResource = null; // V1 admin badge resource address
@@ -184,10 +185,25 @@ function initializeUIElements() {
     adminBadgeIconUrl: document.getElementById("adminBadgeIconUrl"),
     configBadgeIconUrl: document.getElementById("configBadgeIconUrl"),
     registrarBadgeIconUrl: document.getElementById("registrarBadgeIconUrl"),
+    
+    // Component metadata elements
+    componentName: document.getElementById("componentName"),
+    componentDescription: document.getElementById("componentDescription"),
+    componentTags: document.getElementById("componentTags"),
+    componentInfoUrl: document.getElementById("componentInfoUrl"),
+    componentIconUrl: document.getElementById("componentIconUrl"),
+    subregistryName: document.getElementById("subregistryName"),
+    subregistryDescription: document.getElementById("subregistryDescription"),
+    subregistryTags: document.getElementById("subregistryTags"),
+    subregistryIconUrl: document.getElementById("subregistryIconUrl"),
+    
+    // dApp Definition Config elements (only icon URL - name, description, info URL will match component)
+    dappDefinitionIconUrl: document.getElementById("dappDefinitionIconUrl"),
+    
     step3Back: document.getElementById("step3Back"),
     step3Next: document.getElementById("step3Next"),
     
-    // Step 4 elements (formerly Step 5 - Instantiate)
+    // Step 4 elements (Instantiate)
     configSummary: document.getElementById("configSummary"),
     manifestPreview: document.getElementById("manifestPreview"),
     step4Back: document.getElementById("step4Back"),
@@ -360,6 +376,40 @@ function initializeNetworkDefaults() {
     elements.registrarBadgeIconUrl.value = "https://arweave.net/l56120F-BAGF3IySziHyGu_7dkhMPKDtYuEVS9IEAf8";
   }
   
+  // Set default component metadata if empty
+  if (!elements.componentName?.value) {
+    elements.componentName.value = "";
+  }
+  if (!elements.componentDescription?.value) {
+    elements.componentDescription.value = "";
+  }
+  if (!elements.componentTags?.value) {
+    elements.componentTags.value = "";
+  }
+  if (!elements.componentInfoUrl?.value) {
+    elements.componentInfoUrl.value = "";
+  }
+  if (!elements.componentIconUrl?.value) {
+    elements.componentIconUrl.value = "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+  }
+  if (!elements.subregistryName?.value) {
+    elements.subregistryName.value = "";
+  }
+  if (!elements.subregistryDescription?.value) {
+    elements.subregistryDescription.value = "";
+  }
+  if (!elements.subregistryTags?.value) {
+    elements.subregistryTags.value = "";
+  }
+  if (!elements.subregistryIconUrl?.value) {
+    elements.subregistryIconUrl.value = "https://arweave.net/8uiwedlLN8HdODKI_-FZSUEUXkY4NTw4PJkeJcWqe_k";
+  }
+  
+  // Set dApp definition icon default (same as component icon by default)
+  if (!elements.dappDefinitionIconUrl?.value) {
+    elements.dappDefinitionIconUrl.value = "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+  }
+  
   // Network defaults initialized
 }
 
@@ -377,27 +427,33 @@ function switchTab(tabName) {
 function goToStep(step) {
   // Update progress bar (step 1 is mode selection, not in tracker)
   // Tracker shows steps 2-4 as positions 1-3
-  if (step >= 2) {
+  if (step >= 2 && elements.progressSteps) {
     const trackerStep = step - 1; // Map step 2->1, step 3->2, step 4->3
-  elements.progressSteps.forEach((el, index) => {
-      el.classList.toggle("active", index + 1 === trackerStep);
-      el.classList.toggle("completed", index + 1 < trackerStep);
-  });
+    elements.progressSteps.forEach((el, index) => {
+      if (el) {
+        el.classList.toggle("active", index + 1 === trackerStep);
+        el.classList.toggle("completed", index + 1 < trackerStep);
+      }
+    });
   }
   
-  // Update step visibility
-  elements.steps.forEach((el, index) => {
-    const isActive = index + 1 === step;
-    el.classList.toggle("active", isActive);
-    
-    // CRITICAL FIX: Remove .hidden class when making step active
-    // because .hidden has !important which overrides .step.active
-    if (isActive) {
-      el.classList.remove("hidden");
-    } else {
-      el.classList.add("hidden");
-    }
-  });
+  // Update step visibility - do all DOM changes atomically in a single pass
+  // This prevents triggering Radix toolkit's MutationObserver multiple times
+  if (elements.steps) {
+    elements.steps.forEach((el, index) => {
+      if (el) {
+        const isActive = (index + 1 === step);
+        // Update both classes atomically
+        if (isActive) {
+          el.classList.add("active");
+          el.classList.remove("hidden");
+        } else {
+          el.classList.remove("active");
+          el.classList.add("hidden");
+        }
+      }
+    });
+  }
   
   currentStep = step;
   
@@ -425,22 +481,24 @@ function goToAdminStep(step) {
   // Update progress tracker
   const adminProgressSteps = document.querySelectorAll("#adminProgressTracker .tracker-step");
   adminProgressSteps.forEach((el, index) => {
-    el.classList.toggle("active", index + 1 === step);
-    el.classList.toggle("completed", index + 1 < step);
+    if (el) {
+      el.classList.toggle("active", index + 1 === step);
+      el.classList.toggle("completed", index + 1 < step);
+    }
   });
   
-  // Update step visibility (use admin step IDs directly)
-  // CRITICAL: Handle both .active and .hidden classes, similar to deployment wizard
+  // Update step visibility atomically - all changes in single pass
+  // This prevents triggering Radix toolkit's MutationObserver multiple times
   for (let i = 1; i <= 4; i++) {
     const stepEl = document.getElementById(`adminStep${i}`);
     if (stepEl) {
       const isActive = (i === step);
-      stepEl.classList.toggle("active", isActive);
-      
-      // Remove .hidden if making active, add .hidden otherwise
+      // Update both classes atomically
       if (isActive) {
+        stepEl.classList.add("active");
         stepEl.classList.remove("hidden");
       } else {
+        stepEl.classList.remove("active");
         stepEl.classList.add("hidden");
       }
     }
@@ -449,6 +507,21 @@ function goToAdminStep(step) {
   // Auto-load all reserved domains when entering step 2 (Reserved Domain Management)
   if (step === 2 && adminComponentAddress) {
     loadAllReservedDomains();
+  }
+  
+  // Update component address displays when navigating
+  if (adminComponentAddress) {
+    const displays = [
+      document.getElementById('adminComponentDisplay'),
+      document.getElementById('adminComponentDisplay3'),
+      document.getElementById('adminComponentDisplay4')
+    ];
+    
+    displays.forEach(display => {
+      if (display) {
+        display.textContent = adminComponentAddress;
+      }
+    });
   }
   
   // Scroll to top
@@ -478,11 +551,11 @@ function validateCurrentStep() {
     case 1:
       return validateStep1();
     case 2:
-      return validateStep2(); // Package setup (was step 3)
+      return validateStep2(); // Package setup
     case 3:
-      return validateStep3(); // Prerequisites (was step 4)
+      return validateStep3(); // Prerequisites
     case 4:
-      return validateStep4(); // Instantiate (was step 5)
+      return validateStep4(); // Instantiate
     default:
       return true;
   }
@@ -583,6 +656,35 @@ function validateStep3() {
     return false;
   }
   
+  // Get component metadata
+  const componentName = elements.componentName.value.trim() || "";
+  const componentDescription = elements.componentDescription.value.trim() || "";
+  const componentTagsText = elements.componentTags.value.trim() || "";
+  const componentInfoUrl = elements.componentInfoUrl.value.trim() || "";
+  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+  const subregistryName = elements.subregistryName.value.trim() || "";
+  const subregistryDescription = elements.subregistryDescription.value.trim() || "";
+  const subregistryTagsText = elements.subregistryTags.value.trim() || "";
+  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/8uiwedlLN8HdODKI_-FZSUEUXkY4NTw4PJkeJcWqe_k";
+  
+  // Parse tags into arrays
+  const componentTags = componentTagsText.split(',').map(t => t.trim()).filter(t => t);
+  const subregistryTags = subregistryTagsText.split(',').map(t => t.trim()).filter(t => t);
+  
+  // Get dApp definition icon URL (name, description, info URL will match component)
+  const dappDefinitionIconUrl = elements.dappDefinitionIconUrl.value.trim();
+  
+  // Validate dApp definition icon URL
+  if (!dappDefinitionIconUrl || !isValidUrl(dappDefinitionIconUrl)) {
+    showError("Valid dApp icon URL is required");
+    return false;
+  }
+  
+  // dApp definition will use the same name, description, and info URL as the component
+  const dappDefinitionName = componentName;
+  const dappDefinitionDescription = componentDescription;
+  const dappDefinitionInfoUrl = componentInfoUrl;
+  
   // Save all config
   deploymentConfig.paymentResources = paymentResources;
   deploymentConfig.legacyDomainResource = legacyDomain;
@@ -592,12 +694,25 @@ function validateStep3() {
   deploymentConfig.adminBadgeIconUrl = adminBadgeIconUrl;
   deploymentConfig.configBadgeIconUrl = configBadgeIconUrl;
   deploymentConfig.registrarBadgeIconUrl = registrarBadgeIconUrl;
+  deploymentConfig.componentName = componentName;
+  deploymentConfig.componentDescription = componentDescription;
+  deploymentConfig.componentTags = componentTags;
+  deploymentConfig.componentInfoUrl = componentInfoUrl;
+  deploymentConfig.componentIconUrl = componentIconUrl;
+  deploymentConfig.subregistryName = subregistryName;
+  deploymentConfig.subregistryDescription = subregistryDescription;
+  deploymentConfig.subregistryTags = subregistryTags;
+  deploymentConfig.subregistryIconUrl = subregistryIconUrl;
+  deploymentConfig.dappDefinitionName = dappDefinitionName;
+  deploymentConfig.dappDefinitionDescription = dappDefinitionDescription;
+  deploymentConfig.dappDefinitionInfoUrl = dappDefinitionInfoUrl;
+  deploymentConfig.dappDefinitionIconUrl = dappDefinitionIconUrl;
   
   return true;
 }
 
 function validateStep4() {
-  // Only validate for deploy mode
+  // Only validate for deploy mode (Instantiate step)
   if (selectedMode !== 'deploy') {
     return true;
   }
@@ -1017,6 +1132,19 @@ async function loadAdminComponent() {
     const blueprintName = componentDetails.details?.blueprint_name;
     const packageAddress = componentDetails.details?.package_address;
     
+    // Fetch dApp definition address from component metadata
+    try {
+      if (componentDetails.metadata?.items) {
+        const dappDefMetadata = componentDetails.metadata.items.find(item => item.key === 'dapp_definition');
+        if (dappDefMetadata && dappDefMetadata.value?.typed?.value) {
+          adminDappDefinitionAddress = dappDefMetadata.value.typed.value;
+        }
+      }
+    } catch (error) {
+      console.warn("⚠️ Could not fetch dApp definition address:", error);
+      // Non-critical, continue without it
+    }
+    
     // Validate the component actually has RNS methods by calling get_v1_lock_status
     try {
       const manifest = `CALL_METHOD
@@ -1067,6 +1195,22 @@ async function loadAdminComponent() {
         display.textContent = adminComponentAddress;
       }
     });
+    
+    // Update dApp definition address displays if it was found
+    if (adminDappDefinitionAddress) {
+      const dappDefDisplays = [
+        document.getElementById('adminDappDefDisplay'),
+        document.getElementById('adminDappDefDisplay3'),
+        document.getElementById('adminDappDefDisplay4')
+      ];
+      
+      dappDefDisplays.forEach(display => {
+        if (display) {
+          display.textContent = adminDappDefinitionAddress;
+          display.parentElement.classList.remove('hidden');
+        }
+      });
+    }
     
     // Show the component info sections
     const adminComponentInfo = document.getElementById('adminComponentInfo');
@@ -1725,8 +1869,6 @@ async function loadAllReservedDomains() {
         </div>
       `;
       document.getElementById("allDomainsSection").classList.remove("hidden");
-      loadBtn.disabled = false;
-      loadBtn.textContent = "Load All Reserved Domains";
       return;
     }
     
@@ -2736,7 +2878,9 @@ function showError(message) {
   document.body.appendChild(errorDiv);
   
   setTimeout(() => {
-    document.body.removeChild(errorDiv);
+    if (errorDiv && errorDiv.parentNode) {
+      errorDiv.parentNode.removeChild(errorDiv);
+    }
   }, 5000);
 }
 
@@ -2748,7 +2892,9 @@ function showSuccess(message) {
   document.body.appendChild(successDiv);
   
   setTimeout(() => {
-    document.body.removeChild(successDiv);
+    if (successDiv && successDiv.parentNode) {
+      successDiv.parentNode.removeChild(successDiv);
+    }
   }, 5000);
 }
 
@@ -3758,13 +3904,14 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!elements.step3Next) console.error("❌ step3Next element not found");
   else elements.step3Next.onclick = nextStep;
   
+  // Step 4 navigation (Instantiate)
   if (!elements.step4Back) console.error("❌ step4Back element not found");
   else elements.step4Back.onclick = previousStep;
   
   if (!elements.step4Next) console.error("❌ step4Next element not found");
   else elements.step4Next.onclick = instantiateRNSCore;
   
-  // Admin wizard step navigation (matching deployment wizard structure)
+  // Admin wizard step navigation (5 steps total)
   // Admin step navigation elements
   const adminStep1Back = document.getElementById("adminStep1Back");
   const adminStep2Back = document.getElementById("adminStep2Back");
@@ -3772,6 +3919,8 @@ document.addEventListener("DOMContentLoaded", () => {
   const adminStep3Back = document.getElementById("adminStep3Back");
   const adminStep3Next = document.getElementById("adminStep3Next");
   const adminStep4Back = document.getElementById("adminStep4Back");
+  const adminStep4Next = document.getElementById("adminStep4Next");
+  const adminStep5Back = document.getElementById("adminStep5Back");
   const adminComplete = document.getElementById("adminComplete");
   
   // Back buttons (go back to mode selection from step 1, go back to previous step from others)

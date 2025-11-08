@@ -1,0 +1,55 @@
+<!-- ===== REGISTRAR MODAL ENHANCEMENTS =====
+     These changes need to be added to index.html (lines ~1016-1064)
+     
+     CHANGE 1: Add Stats Section (after registrarInfoDisplay section)
+     ============================================================== -->
+
+<!-- ADD THIS AFTER LINE 1020 (after </div> that closes registrarInfoDisplay) -->
+
+        <!-- Registrar Performance Stats (NEW) -->
+        <div id="registrarStatsDisplay" class="form-section" style="margin-bottom: 32px; padding-top: 32px; border-top: 1px solid #e5e7eb;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">📊 Performance Statistics</h4>
+          <div id="registrarStatsContent" class="info-card" style="padding: 16px;">
+            <p class="info-empty">Loading statistics...</p>
+          </div>
+        </div>
+
+<!-- ===================================================================
+     CHANGE 2: Update Withdraw Fees Section (replace lines 1051-1064)
+     =================================================================== -->
+
+<!-- REPLACE THE ENTIRE "Withdraw Fees" section (lines 1051-1064) WITH THIS: -->
+
+        <!-- Withdraw Fees -->
+        <div id="withdrawFeesSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px; border-top: 1px solid #e5e7eb;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">💰 Withdraw Accumulated Fees</h4>
+          
+          <!-- Fees Per Resource Display -->
+          <div id="accumulatedFeesContent" class="info-card" style="margin-bottom: 16px;">
+            <p class="info-empty">Loading fee information...</p>
+          </div>
+          
+          <!-- Resource Selection for Withdrawal -->
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="withdrawResourceSelect">Select Resource to Withdraw:</label>
+            <select id="withdrawResourceSelect" class="form-control">
+              <option value="">-- Select Resource --</option>
+            </select>
+            <small class="form-help">Choose which payment resource fees to withdraw</small>
+          </div>
+          
+          <button id="withdrawFeesBtn" class="btn btn-primary" disabled>
+            Withdraw Selected Resource Fees
+          </button>
+        </div>
+
+<!-- ===================================================================
+     END OF HTML CHANGES
+     
+     Summary:
+     - Added registrarStatsDisplay section to show domains bonded & fees earned per resource
+     - Updated withdrawFeesSection to include resource dropdown for per-resource withdrawal
+     - Removed the old "100 domains requirement" message
+     =================================================================== -->
+
+
