@@ -22,6 +22,10 @@ export const getRNSInstantiateManifest = ({
   subregistryDescription = "",
   subregistryTags = [],
   subregistryIconUrl = "",
+  dappDefinitionName = "",
+  dappDefinitionDescription = "",
+  dappDefinitionInfoUrl = "",
+  dappDefinitionIconUrl = "",
   accountAddress,
   networkId = "stokenet" // "stokenet" or "mainnet"
 }) => {
@@ -60,7 +64,13 @@ export const getRNSInstantiateManifest = ({
   "${subregistryName}"
   "${subregistryDescription}"
   ${subregistryTagsArray}
-  "${subregistryIconUrl}";
+  "${subregistryIconUrl}"
+  Tuple(
+    "${dappDefinitionName}",
+    "${dappDefinitionDescription}",
+    "${dappDefinitionInfoUrl}",
+    "${dappDefinitionIconUrl}"
+  );
 
 CALL_METHOD
   Address("${accountAddress}")

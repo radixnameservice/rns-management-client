@@ -47,6 +47,7 @@ let selectedPackageOption = null; // 'existing' or 'new'
 let deploymentConfig = {};
 let adminComponentAddress = null;
 let adminBadgeResourceAddress = null;
+let adminDappDefinitionAddress = null;
 let uploadedDomainsInSession = []; // Track domains uploaded in this session
 let allReservedDomains = []; // All reserved domains from component
 let v1AdminBadgeResource = null; // V1 admin badge resource address
@@ -195,6 +196,9 @@ function initializeUIElements() {
     subregistryDescription: document.getElementById("subregistryDescription"),
     subregistryTags: document.getElementById("subregistryTags"),
     subregistryIconUrl: document.getElementById("subregistryIconUrl"),
+    
+    // dApp Definition Config elements (only icon URL - name, description, info URL will match component)
+    dappDefinitionIconUrl: document.getElementById("dappDefinitionIconUrl"),
     
     step3Back: document.getElementById("step3Back"),
     step3Next: document.getElementById("step3Next"),
@@ -401,6 +405,11 @@ function initializeNetworkDefaults() {
     elements.subregistryIconUrl.value = "https://arweave.net/8uiwedlLN8HdODKI_-FZSUEUXkY4NTw4PJkeJcWqe_k";
   }
   
+  // Set dApp definition icon default (same as component icon by default)
+  if (!elements.dappDefinitionIconUrl?.value) {
+    elements.dappDefinitionIconUrl.value = "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+  }
+  
   // Network defaults initialized
 }
 
@@ -480,7 +489,7 @@ function goToAdminStep(step) {
   
   // Update step visibility atomically - all changes in single pass
   // This prevents triggering Radix toolkit's MutationObserver multiple times
-  for (let i = 1; i <= 5; i++) {
+  for (let i = 1; i <= 4; i++) {
     const stepEl = document.getElementById(`adminStep${i}`);
     if (stepEl) {
       const isActive = (i === step);
@@ -505,8 +514,7 @@ function goToAdminStep(step) {
     const displays = [
       document.getElementById('adminComponentDisplay'),
       document.getElementById('adminComponentDisplay3'),
-      document.getElementById('adminComponentDisplay4'),
-      document.getElementById('adminComponentDisplay5')
+      document.getElementById('adminComponentDisplay4')
     ];
     
     displays.forEach(display => {
@@ -521,7 +529,7 @@ function goToAdminStep(step) {
 }
 
 function nextAdminStep() {
-  if (currentAdminStep < 5) {
+  if (currentAdminStep < 4) {
     goToAdminStep(currentAdminStep + 1);
   }
 }
@@ -663,6 +671,20 @@ function validateStep3() {
   const componentTags = componentTagsText.split(',').map(t => t.trim()).filter(t => t);
   const subregistryTags = subregistryTagsText.split(',').map(t => t.trim()).filter(t => t);
   
+  // Get dApp definition icon URL (name, description, info URL will match component)
+  const dappDefinitionIconUrl = elements.dappDefinitionIconUrl.value.trim();
+  
+  // Validate dApp definition icon URL
+  if (!dappDefinitionIconUrl || !isValidUrl(dappDefinitionIconUrl)) {
+    showError("Valid dApp icon URL is required");
+    return false;
+  }
+  
+  // dApp definition will use the same name, description, and info URL as the component
+  const dappDefinitionName = componentName;
+  const dappDefinitionDescription = componentDescription;
+  const dappDefinitionInfoUrl = componentInfoUrl;
+  
   // Save all config
   deploymentConfig.paymentResources = paymentResources;
   deploymentConfig.legacyDomainResource = legacyDomain;
@@ -681,6 +703,10 @@ function validateStep3() {
   deploymentConfig.subregistryDescription = subregistryDescription;
   deploymentConfig.subregistryTags = subregistryTags;
   deploymentConfig.subregistryIconUrl = subregistryIconUrl;
+  deploymentConfig.dappDefinitionName = dappDefinitionName;
+  deploymentConfig.dappDefinitionDescription = dappDefinitionDescription;
+  deploymentConfig.dappDefinitionInfoUrl = dappDefinitionInfoUrl;
+  deploymentConfig.dappDefinitionIconUrl = dappDefinitionIconUrl;
   
   return true;
 }
@@ -801,174 +827,6 @@ function addPaymentResourceInput() {
 
 function removePaymentResource(button) {
   button.parentElement.remove();
-}
-
-// ********** Admin dApp Definition Functions **********
-function generateAdminDappDefinitionManifest() {
-  // Get form values from admin section
-  const name = document.getElementById("adminNewDappName").value.trim();
-  const description = document.getElementById("adminNewDappDescription").value.trim();
-  const iconUrl = document.getElementById("adminNewDappIconUrl").value.trim();
-  const tagsText = document.getElementById("adminNewDappTags").value.trim();
-
-  // Parse tags (comma-separated)
-  const tags = tagsText
-    .split(',')
-    .map(t => t.trim())
-    .filter(t => t.length > 0);
-  
-  // No websites - using empty array for universal access
-  const claimedWebsites = [];
-  
-  // Validate
-  const validation = validateDappDefinitionParams({
-    dappAccountAddress: account?.address || 'account_tdx_2_1...',
-    name,
-    description,
-    iconUrl,
-    tags,
-    claimedWebsites,
-    claimedEntities: []
-  });
-  
-  if (!validation.valid) {
-    showError("Validation errors: " + validation.errors.join(", "));
-    return;
-  }
-  
-  // Generate manifest
-  const manifest = getDappDefinitionManifest({
-    dappAccountAddress: account.address,
-    name,
-    description,
-    iconUrl,
-    tags,
-    claimedWebsites,
-    claimedEntities: [],
-    networkId: currentNetwork
-  });
-  
-  // Display manifest in admin section
-  document.getElementById("adminDappManifestCode").textContent = manifest;
-  document.getElementById("adminDappManifestOutput").classList.remove('hidden');
-  
-  showSuccess("dApp definition manifest generated! Review and submit to create your dApp definition.");
-}
-
-async function submitAdminDappDefinitionManifest() {
-  if (!account) {
-    showError("Please connect your wallet first");
-    return;
-  }
-  
-  const manifest = document.getElementById("adminDappManifestCode").textContent;
-  if (!manifest) {
-    showError("No manifest to submit");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Creating dApp definition...");
-    
-    const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    });
-    
-    if (result.isOk()) {
-      const txId = result.value.transactionIntentHash;
-      
-      // Wait for transaction confirmation
-      await waitForTransaction(txId);
-      
-      // The dApp definition address is the account address used in the manifest
-      const dappAddress = account.address;
-      
-      document.getElementById("adminCreatedDappAddress").textContent = dappAddress;
-      document.getElementById("adminDappCreationResult").classList.remove('hidden');
-      
-      hideTransactionModal();
-      showSuccess("dApp definition created successfully! Now set it on the RNS component.");
-    } else {
-      throw new Error(result.error || "Transaction failed");
-    }
-  } catch (error) {
-    hideTransactionModal();
-    showError("Failed to create dApp definition: " + error.message);
-  }
-}
-
-async function setDappDefinitionOnComponent() {
-  if (!account) {
-    showError("Please connect your wallet first");
-    return;
-  }
-  
-  if (!adminComponentAddress) {
-    showError("No component loaded");
-    return;
-  }
-  
-  if (!adminBadgeResourceAddress) {
-    showError("Admin badge resource not found");
-    return;
-  }
-  
-  const dappAddress = document.getElementById("adminExistingDappAddress").value.trim();
-  if (!dappAddress) {
-    showError("Please enter a dApp definition address");
-    return;
-  }
-  
-  // Validate address format
-  if (!dappAddress.match(/^account_(tdx|rdx|sim)(_\d+)?_[a-z0-9]+$/)) {
-    showError("Invalid dApp definition address format");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Setting dApp definition on component...");
-    
-    const manifest = getUpdateDappDefinitionManifest({
-      componentAddress: adminComponentAddress,
-      adminBadgeResource: adminBadgeResourceAddress,
-      dappDefinitionAddress: dappAddress,
-      accountAddress: account.address,
-      networkId: currentNetwork
-    });
-    
-    const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    });
-    
-    if (result.isOk()) {
-      const txId = result.value.transactionIntentHash;
-      await waitForTransaction(txId);
-      
-      document.getElementById("adminDappDefinitionStatus").classList.remove('hidden');
-      
-      hideTransactionModal();
-      showSuccess("dApp definition set successfully! You can now proceed to burn the admin badge.");
-    } else {
-      throw new Error(result.error || "Transaction failed");
-    }
-  } catch (error) {
-    hideTransactionModal();
-    showError("Failed to set dApp definition: " + error.message);
-  }
-}
-
-async function setCreatedDappDefinitionOnComponent() {
-  const dappAddress = document.getElementById("adminCreatedDappAddress").textContent;
-  if (!dappAddress) {
-    showError("No dApp definition address found");
-    return;
-  }
-  
-  // Copy address to the existing dApp section and call set function
-  document.getElementById("adminExistingDappAddress").value = dappAddress;
-  await setDappDefinitionOnComponent();
 }
 
 // ********** Instantiation Process **********
@@ -1274,6 +1132,19 @@ async function loadAdminComponent() {
     const blueprintName = componentDetails.details?.blueprint_name;
     const packageAddress = componentDetails.details?.package_address;
     
+    // Fetch dApp definition address from component metadata
+    try {
+      if (componentDetails.metadata?.items) {
+        const dappDefMetadata = componentDetails.metadata.items.find(item => item.key === 'dapp_definition');
+        if (dappDefMetadata && dappDefMetadata.value?.typed?.value) {
+          adminDappDefinitionAddress = dappDefMetadata.value.typed.value;
+        }
+      }
+    } catch (error) {
+      console.warn("⚠️ Could not fetch dApp definition address:", error);
+      // Non-critical, continue without it
+    }
+    
     // Validate the component actually has RNS methods by calling get_v1_lock_status
     try {
       const manifest = `CALL_METHOD
@@ -1324,6 +1195,22 @@ async function loadAdminComponent() {
         display.textContent = adminComponentAddress;
       }
     });
+    
+    // Update dApp definition address displays if it was found
+    if (adminDappDefinitionAddress) {
+      const dappDefDisplays = [
+        document.getElementById('adminDappDefDisplay'),
+        document.getElementById('adminDappDefDisplay3'),
+        document.getElementById('adminDappDefDisplay4')
+      ];
+      
+      dappDefDisplays.forEach(display => {
+        if (display) {
+          display.textContent = adminDappDefinitionAddress;
+          display.parentElement.classList.remove('hidden');
+        }
+      });
+    }
     
     // Show the component info sections
     const adminComponentInfo = document.getElementById('adminComponentInfo');
@@ -4055,79 +3942,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (adminStep4Back) adminStep4Back.onclick = () => goToAdminStep(3);
   else console.warn("⚠️ adminStep4Back element not found");
   
-  if (adminStep4Next) adminStep4Next.onclick = () => goToAdminStep(5);
-  else console.warn("⚠️ adminStep4Next element not found");
-  
-  if (adminStep5Back) adminStep5Back.onclick = () => goToAdminStep(4);
-  else console.warn("⚠️ adminStep5Back element not found");
-  
   if (adminComplete) adminComplete.onclick = completeAdminSetup;
   else console.warn("⚠️ adminComplete element not found");
-  
-  // Admin dApp Definition toggle and actions (Step 4)
-  const adminUseExistingDapp = document.getElementById("adminUseExistingDapp");
-  const adminCreateNewDapp = document.getElementById("adminCreateNewDapp");
-  const adminExistingDappSection = document.getElementById("adminExistingDappSection");
-  const adminNewDappSection = document.getElementById("adminNewDappSection");
-  
-  if (adminUseExistingDapp && adminCreateNewDapp) {
-    adminUseExistingDapp.onclick = () => {
-      adminUseExistingDapp.classList.add('active');
-      adminCreateNewDapp.classList.remove('active');
-      adminExistingDappSection.classList.remove('hidden');
-      adminNewDappSection.classList.add('hidden');
-    };
-    
-    adminCreateNewDapp.onclick = () => {
-      adminCreateNewDapp.classList.add('active');
-      adminUseExistingDapp.classList.remove('active');
-      adminNewDappSection.classList.remove('hidden');
-      adminExistingDappSection.classList.add('hidden');
-    };
-  }
-  
-  const adminSetDappDefinition = document.getElementById("adminSetDappDefinition");
-  const adminGenerateDappManifest = document.getElementById("adminGenerateDappManifest");
-  const adminCopyDappManifest = document.getElementById("adminCopyDappManifest");
-  const adminSubmitDappManifest = document.getElementById("adminSubmitDappManifest");
-  const adminSetCreatedDappDefinition = document.getElementById("adminSetCreatedDappDefinition");
-  const adminCopyCreatedDappAddress = document.getElementById("adminCopyCreatedDappAddress");
-  
-  if (adminSetDappDefinition) {
-    adminSetDappDefinition.onclick = setDappDefinitionOnComponent;
-  }
-  
-  if (adminGenerateDappManifest) {
-    adminGenerateDappManifest.onclick = generateAdminDappDefinitionManifest;
-  }
-  
-  if (adminCopyDappManifest) {
-    adminCopyDappManifest.onclick = () => {
-      const code = document.getElementById("adminDappManifestCode");
-      if (code) {
-        navigator.clipboard.writeText(code.textContent);
-        showSuccess("Manifest copied to clipboard!");
-      }
-    };
-  }
-  
-  if (adminSubmitDappManifest) {
-    adminSubmitDappManifest.onclick = submitAdminDappDefinitionManifest;
-  }
-  
-  if (adminSetCreatedDappDefinition) {
-    adminSetCreatedDappDefinition.onclick = setCreatedDappDefinitionOnComponent;
-  }
-  
-  if (adminCopyCreatedDappAddress) {
-    adminCopyCreatedDappAddress.onclick = () => {
-      const address = document.getElementById("adminCreatedDappAddress");
-      if (address) {
-        navigator.clipboard.writeText(address.textContent);
-        showSuccess("dApp definition address copied!");
-      }
-    };
-  }
   
   // Payment resources management - with error checking
   // Resource management elements
