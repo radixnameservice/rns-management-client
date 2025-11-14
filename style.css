@@ -1192,6 +1192,25 @@ label {
   transform: translateY(-2px);
 }
 
+.btn-success {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: white;
+  border: none;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.btn-success:hover:not(:disabled) {
+  background: linear-gradient(135deg, #059669, #047857);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+  transform: translateY(-2px);
+}
+
+.btn-success:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  transform: none;
+}
+
 .btn-warning {
   background: #f39c12;
   color: white;
@@ -1316,7 +1335,6 @@ label {
   font-size: 0.9rem;
   line-height: 1.5;
 }
-
 /* Step Navigation */
 .step-navigation {
   display: flex;
@@ -2976,6 +2994,12 @@ label {
   background: linear-gradient(135deg, #059669, #047857);
   box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
   transform: translateY(-1px);
+}
+
+.registrar-section .btn-success:disabled {
+  opacity: 0.8;
+  cursor: not-allowed;
+  transform: none;
 }
 
 /* Registrar management form enhancements */

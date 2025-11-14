@@ -443,7 +443,6 @@
               <label for="dappDefinitionIconUrl">dApp Icon URL:</label>
               <input id="dappDefinitionIconUrl" type="url" class="form-control"
                 placeholder="e.g. https://your-cdn.com/dapp-icon.png">
-              <small class="form-help">Icon for your dApp definition (usually the same as component icon)</small>
             </div>
           </div>
 
@@ -944,6 +943,61 @@
           </div>
         </div>
 
+        <!-- Domain Management -->
+        <div class="tool-section collapsible-tool collapsed hidden">
+          <div class="tool-header" data-tool="domainManagement">
+            <h3>🌐 Domain Management</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <p class="tool-description">Register domains and manage their subdomains and records.</p>
+
+          <div class="tool-content" id="domainManagementContent">
+
+            <!-- Register New Domain -->
+            <div class="form-section">
+              <h4>Register New Domain</h4>
+              <p class="form-help">Bond a new domain on the RNS service</p>
+
+              <div class="form-group">
+                <label for="newDomainName">Domain Name:</label>
+                <input id="newDomainName" type="text" class="form-control" placeholder="mydomain">
+                <small class="form-help">Domain name without TLD (e.g., "mydomain" for "mydomain.xrd")</small>
+              </div>
+
+              <div class="form-group">
+                <label for="domainBondAmount">Bond Amount:</label>
+                <input id="domainBondAmount" type="number" class="form-control" placeholder="100" step="1" min="0">
+                <small class="form-help">Amount of payment resource to bond (includes registrar fee)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="domainRegistrarSelect">Select Registrar:</label>
+                <select id="domainRegistrarSelect" class="form-control">
+                  <option value="">Loading registrar badges...</option>
+                </select>
+                <small class="form-help">Choose which registrar badge to use for registration</small>
+              </div>
+
+              <button id="registerNewDomain" class="btn btn-primary">Register Domain</button>
+            </div>
+
+            <!-- Manage Existing Domains -->
+            <div class="form-section" style="margin-top: 32px;">
+              <h4>Your Domains</h4>
+              <p class="form-help">Domains you own will be automatically detected</p>
+
+              <button id="refreshDomainsList" class="btn btn-secondary" style="margin-bottom: 16px;">
+                🔄 Refresh Domains List
+              </button>
+
+              <div id="domainsList" class="hidden" style="margin-top: 20px;">
+                <div id="domainsContent" class="info-card"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Registrar Management -->
         <div class="tool-section collapsible-tool collapsed hidden">
           <div class="tool-header" data-tool="registrarManagement">
@@ -1001,193 +1055,98 @@
 
           </div>
         </div>
-
-        <!-- Test Data Setup (Stokenet) -->
-        <div class="tool-section collapsible-tool collapsed">
-          <div class="tool-header" data-tool="testDataSetup">
-            <h3>🧪 Test Data Setup (Stokenet)</h3>
-            <span class="expand-icon">▼</span>
-          </div>
-          <p class="tool-description">Create test domains, subdomains, and records for RNS SDK V2 end-to-end testing on Stokenet.</p>
-
-          <div class="tool-content" id="testDataSetupContent">
-
-            <!-- Registrar Badge Required Warning -->
-            <div id="testDataNoRegistrarWarning" class="info-message hidden" style="margin-bottom: 24px; background: #fef3c7; border: 1px solid #fbbf24;">
-              <p style="margin: 0; color: #92400e;">
-                <strong>⚠️ Registrar Badge Required:</strong> You need a registrar badge to create test domains. 
-                Please register as a registrar in the <strong>Registrar Management</strong> section above first.
-              </p>
-            </div>
-
-            <!-- Network & Account Info -->
-            <div class="info-message" style="margin-bottom: 24px;">
-              <p style="margin: 0 0 8px 0;"><strong>⚠️ Stokenet Only:</strong> This tool is designed for test data creation on Stokenet.</p>
-              <p style="margin: 0;"><strong>Test Account:</strong> <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 3px; font-size: 0.9em;">account_tdx_2_128jmkhrkxwd0h9vqfetw34ars7msls9kmk5y60prxsk9guwuxskn5p</code></p>
-            </div>
-
-            <!-- Registrar Badge Info -->
-            <div id="testDataRegistrarInfo" class="hidden" style="margin-bottom: 24px; padding: 12px; background: #f0f9ff; border: 1px solid #0284c7; border-radius: 6px;">
-              <p style="margin: 0 0 8px 0; color: #0c4a6e; font-weight: 500;">
-                🎫 Select Registrar Badge to Use:
-              </p>
-              <p style="margin: 0 0 12px 0; color: #0c4a6e; font-size: 0.85em;">
-                Choose which registrar badge will be used to register all test domains
-              </p>
-              <select id="testDataRegistrarSelect" class="form-control" style="background: white; color: #0c4a6e; border: 1px solid #0284c7;">
-                <option value="">Loading registrar badges...</option>
-              </select>
-            </div>
-
-            <!-- Main Content Wrapper (can be disabled) -->
-            <div id="testDataMainContent">
-            
-            <!-- Batch Controls -->
-            <div class="form-section" style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px; margin-bottom: 24px;">
-              <h4 style="margin-bottom: 12px;">⚡ Batch Operations</h4>
-              <p class="form-help" style="margin-bottom: 16px;">Execute all 6 test domain setups sequentially.</p>
-                
-                <button id="runAllTestSetup" class="btn btn-primary" style="width: 100%;">
-                  ▶️ Run All Setups
-                </button>
-
-              <!-- Progress Tracker -->
-              <div id="testDataProgress" class="hidden" style="margin-top: 16px;">
-                <div style="background: white; border-radius: 6px; padding: 12px; border: 1px solid #e2e8f0;">
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                    <span style="font-weight: 500;">Progress</span>
-                    <span id="testProgressText" style="color: #64748b; font-size: 0.9em;">0/6 domains</span>
-                  </div>
-                  <div style="background: #e2e8f0; border-radius: 4px; height: 8px; overflow: hidden;">
-                    <div id="testProgressBar" style="background: linear-gradient(90deg, #3b82f6, #2563eb); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
-                  </div>
-                  <div id="testProgressDetails" style="margin-top: 12px; font-size: 0.85em; color: #475569;"></div>
-                </div>
-              </div>
-            </div>
-
-            <!-- Domain 1: radixnameservice.xrd -->
-            <div class="form-section test-domain-card" data-domain="radixnameservice">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">1. radixnameservice.xrd</h4>
-                  <span class="badge" style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Details & Activation Tests</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="radixnameservice">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> 2 records (receivers/*, social/twitter)</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> 1 subdomain (test.radixnameservice.xrd)</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            <!-- Domain 2: subdomains.xrd -->
-            <div class="form-section test-domain-card" data-domain="subdomains">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">2. subdomains.xrd</h4>
-                  <span class="badge" style="background: #fef3c7; color: #92400e; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Subdomain Listing & Pagination</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="subdomains">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> None</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> 5 subdomains (alpha, beta, gamma, delta, epsilon)</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            <!-- Domain 3: no-subdomains.xrd -->
-            <div class="form-section test-domain-card" data-domain="no-subdomains">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">3. no-subdomains.xrd</h4>
-                  <span class="badge" style="background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Empty Subdomain Queries</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="no-subdomains">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> None</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> None (intentionally empty)</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            <!-- Domain 4: test-records-present.xrd -->
-            <div class="form-section test-domain-card" data-domain="test-records-present">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">4. test-records-present.xrd</h4>
-                  <span class="badge" style="background: #d1fae5; color: #065f46; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Record Retrieval & Resolution</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="test-records-present">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> 3 records (receivers/*, social/github, metadata/description)</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> None</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            <!-- Domain 5: test-records-blank.xrd -->
-            <div class="form-section test-domain-card" data-domain="test-records-blank">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">5. test-records-blank.xrd</h4>
-                  <span class="badge" style="background: #fee2e2; color: #991b1b; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Empty Record Queries</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="test-records-blank">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> None (intentionally empty)</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> None</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            <!-- Domain 6: transfer-test.xrd -->
-            <div class="form-section test-domain-card" data-domain="transfer-test">
-              <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 12px;">
-                <div>
-                  <h4 style="margin: 0 0 4px 0;">6. transfer-test.xrd</h4>
-                  <span class="badge" style="background: #fce7f3; color: #831843; padding: 2px 8px; border-radius: 4px; font-size: 0.75em;">Transfer Tests</span>
-                </div>
-                <button class="btn btn-primary btn-sm setup-domain-btn" data-domain="transfer-test">
-                  Setup
-                </button>
-              </div>
-              <div class="test-domain-details" style="font-size: 0.85em; color: #64748b; line-height: 1.6;">
-                <p style="margin: 8px 0 4px 0;"><strong>Owner:</strong> Test Account</p>
-                <p style="margin: 4px 0;"><strong>Records:</strong> 1 record (receivers/*)</p>
-                <p style="margin: 4px 0;"><strong>Subdomains:</strong> 2 subdomains (demo, example)</p>
-              </div>
-              <div class="test-domain-status hidden" style="margin-top: 12px; padding: 8px; background: #f1f5f9; border-radius: 4px; font-size: 0.85em;"></div>
-            </div>
-
-            </div>
-            <!-- End Main Content Wrapper -->
-
-          </div>
-        </div>
       </div>
     </div>
   </main>
+
+  <!-- Domain Management Modal -->
+  <div id="domainModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="domainModalTitle">Manage Domain</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body" style="padding: 32px;">
+        
+        <!-- Domain Info Display -->
+        <div id="domainInfoDisplay" class="form-section" style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Domain Information</h4>
+          <div id="domainInfoContent" class="info-card" style="padding: 0;"></div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation" style="display: flex; gap: 16px; border-bottom: 2px solid #e2e8f0; margin-bottom: 24px;">
+          <button class="tab-button active" data-tab="subdomains" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-weight: 500; border-bottom: 2px solid #3b82f6; margin-bottom: -2px; color: #3b82f6;">
+            Subdomains
+          </button>
+          <button class="tab-button" data-tab="records" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-weight: 500; color: #64748b;">
+            Records
+          </button>
+        </div>
+
+        <!-- Subdomains Tab -->
+        <div id="subdomainsTab" class="tab-content">
+          <!-- Create Subdomain -->
+          <div class="form-section" style="margin-bottom: 32px;">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Subdomain</h4>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="newSubdomainName">Subdomain Name:</label>
+              <input id="newSubdomainName" type="text" class="form-control" placeholder="sub">
+              <small class="form-help">Enter subdomain name (e.g., "sub" for "sub.yourdomain.xrd")</small>
+            </div>
+
+            <button id="createSubdomain" class="btn btn-primary">Create Subdomain</button>
+          </div>
+
+          <!-- Existing Subdomains -->
+          <div class="form-section">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Subdomains</h4>
+            <div id="subdomainsList" class="info-card">
+              <p class="info-empty">Loading subdomains...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Tab -->
+        <div id="recordsTab" class="tab-content" style="display: none;">
+          <!-- Create Record -->
+          <div class="form-section" style="margin-bottom: 32px;">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Record</h4>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="recordContext">Context:</label>
+              <input id="recordContext" type="text" class="form-control" placeholder="receivers">
+              <small class="form-help">Record context (e.g., "receivers", "social", "metadata")</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="recordDirective">Directive:</label>
+              <input id="recordDirective" type="text" class="form-control" placeholder="*">
+              <small class="form-help">Record directive (e.g., "*", "twitter", "github")</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="recordValue">Value:</label>
+              <input id="recordValue" type="text" class="form-control" placeholder="account_tdx_...">
+              <small class="form-help">Record value (address, URL, or text)</small>
+            </div>
+
+            <button id="createRecord" class="btn btn-primary">Create Record</button>
+          </div>
+
+          <!-- Existing Records -->
+          <div class="form-section">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Records</h4>
+            <div id="recordsList" class="info-card">
+              <p class="info-empty">Loading records...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
 
   <!-- Registrar Management Modal -->
   <div id="registrarModal" class="modal hidden">
@@ -1258,6 +1217,58 @@
           </div>
           <button id="burnRegistrarBadge" class="btn btn-danger">Burn Registrar Badge</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Subdomain Records Modal (Sub-modal) -->
+  <div id="subdomainRecordsModal" class="modal hidden" style="z-index: 10001;">
+    <div class="modal-content" style="max-width: 700px;">
+      <div class="modal-header">
+        <h3 id="subdomainRecordsModalTitle">Manage Subdomain Records</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body" style="padding: 32px;">
+        
+        <!-- Subdomain Info Display -->
+        <div class="form-section" style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Subdomain Information</h4>
+          <div id="subdomainRecordsInfo" class="info-card" style="padding: 16px;"></div>
+        </div>
+
+        <!-- Create Record -->
+        <div class="form-section" style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Record</h4>
+          
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="subdomainRecordContext">Context:</label>
+            <input id="subdomainRecordContext" type="text" class="form-control" placeholder="receivers">
+            <small class="form-help">Record context (e.g., "receivers", "social", "metadata")</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label for="subdomainRecordDirective">Directive:</label>
+            <input id="subdomainRecordDirective" type="text" class="form-control" placeholder="*">
+            <small class="form-help">Record directive (e.g., "*", "twitter", "github")</small>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 20px;">
+            <label for="subdomainRecordValue">Value:</label>
+            <input id="subdomainRecordValue" type="text" class="form-control" placeholder="account_tdx_...">
+            <small class="form-help">Record value (address, URL, or text)</small>
+          </div>
+
+          <button id="createSubdomainRecord" class="btn btn-primary">Create Record</button>
+        </div>
+
+        <!-- Existing Records -->
+        <div class="form-section">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Records</h4>
+          <div id="subdomainRecordsList" class="info-card">
+            <p class="info-empty">Loading records...</p>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
