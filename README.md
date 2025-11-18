@@ -26,18 +26,12 @@ Manage deployed RNS V2 components with admin privileges (4-step wizard):
 - **Domain Pagination**: Browse all reserved domains with efficient pagination
 - **Auto-Discovery**: Component address, admin badge resource, and dApp definition address are automatically detected
 
-### 📊 RNS Statistics
-View live metrics and analytics for any RNS V2 component:
-- Total domains issued (V2)
-- Domains migrated from V1
-- Unique user count
-- Component address lookup
-- Real-time data from the Radix Gateway
-
 ### 🛠️ Developer Tools
-Radix development utilities and manifest generators:
+Radix development utilities, domain management, and manifest generators:
 - **dApp Definition Creator**: Generate dApp definition accounts with metadata
-- **Registrar Management**: Request and manage registrar badges
+- **Registrar Management**: Request and manage registrar badges with fee tracking and withdrawal
+- **Domain Management**: Manage your owned domains (subdomains, records) with full CRUD operations
+- **Domain Registration**: Register new domains with transparent pricing (base + registrar fee breakdown)
 - **Manifest Builders**: Pre-built transaction manifests for common operations
 - **Address Validation**: Ensure addresses are valid before deployment
 
@@ -146,7 +140,7 @@ Use the network toggle to switch between Stokenet (testing) and Mainnet (product
 
 ### 3. Choose Your Action
 
-Select one of four main modes:
+Select one of three main modes:
 
 #### Instantiate New RNS
 1. Choose to use an existing package or deploy a new one
@@ -164,16 +158,24 @@ Select one of four main modes:
 3. **Badge Locks**: Lock V1 admin and upgrade badges to permanently deprecate V1
 4. **Activation**: Burn admin badge to activate public registration (irreversible - requires dApp definition which was auto-created during instantiation)
 
-#### RNS Statistics
-1. Enter any RNS V2 component address
-2. View live statistics including:
-   - Total domains issued
-   - V1 migration count
-   - Unique users
-
 #### Developer Tools
-1. **dApp Definition Creator**: Generate metadata for your dApp
-2. **Registrar Management**: Request or manage registrar badges
+1. **Component Loading**: Load an RNS V2 component to access all tools
+2. **dApp Definition Creator**: Generate metadata for your dApp
+3. **Registrar Management**: 
+   - Request new registrar badges
+   - View and update registrar settings (name, fee percentage, URLs)
+   - Track fee accumulation (current and lifetime)
+   - Withdraw accumulated registrar fees
+4. **Domain Registration**:
+   - Select payment resource from whitelisted options
+   - Choose your registrar badge
+   - Clear pricing breakdown (base price + registrar fee)
+   - Transparent manifest showing separate withdrawals
+5. **Domain Management**:
+   - View all your owned domains
+   - Manage subdomains (create, list, delete)
+   - Manage records (create, list, delete)
+   - Organized tabbed interface per domain
 
 ## 🏗️ Project Structure
 
@@ -192,7 +194,8 @@ rns-management-client/
 │   ├── reservedDomains.js # Domain reservation manifests
 │   ├── resourceCreation.js # Test resource creation (Stokenet)
 │   ├── dappDefinition.js  # dApp definition manifests
-│   └── registrarManagement.js # Registrar badge operations
+│   ├── registrarManagement.js # Registrar badge operations
+│   └── domainOperations.js # Domain registration, subdomains, records
 └── .gitignore             # Git ignore rules
 ```
 
@@ -315,3 +318,4 @@ By using this software, you acknowledge that:
 This project is licensed under the MIT License.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
