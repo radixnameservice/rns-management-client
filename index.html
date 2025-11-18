@@ -971,6 +971,14 @@
               </div>
 
               <div class="form-group">
+                <label for="domainPaymentResourceSelect">Payment Resource:</label>
+                <select id="domainPaymentResourceSelect" class="form-control">
+                  <option value="">Loading payment resources...</option>
+                </select>
+                <small class="form-help">Choose which payment resource to use for the bond</small>
+              </div>
+
+              <div class="form-group">
                 <label for="domainRegistrarSelect">Select Registrar:</label>
                 <select id="domainRegistrarSelect" class="form-control">
                   <option value="">Loading registrar badges...</option>
@@ -1194,13 +1202,6 @@
         <!-- Withdraw Fees -->
         <div id="withdrawFeesSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
           <h4 style="margin-bottom: 16px; font-size: 1.1em;">Withdraw Accumulated Fees</h4>
-          <div class="info-message"
-            style="margin-bottom: 16px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db; border-radius: 4px;">
-            <p style="margin: 0; font-size: 0.9em;">
-              <strong>Withdrawal Requirement:</strong> You must have issued at least 100 domains via your registrar
-              badge before fees can be withdrawn.
-            </p>
-          </div>
           <div id="accumulatedFeesContent" class="info-card">
             <p class="info-empty">Loading fee information...</p>
           </div>
@@ -1217,58 +1218,6 @@
           </div>
           <button id="burnRegistrarBadge" class="btn btn-danger">Burn Registrar Badge</button>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Subdomain Records Modal (Sub-modal) -->
-  <div id="subdomainRecordsModal" class="modal hidden" style="z-index: 10001;">
-    <div class="modal-content" style="max-width: 700px;">
-      <div class="modal-header">
-        <h3 id="subdomainRecordsModalTitle">Manage Subdomain Records</h3>
-        <button class="modal-close">×</button>
-      </div>
-      <div class="modal-body" style="padding: 32px;">
-        
-        <!-- Subdomain Info Display -->
-        <div class="form-section" style="margin-bottom: 32px;">
-          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Subdomain Information</h4>
-          <div id="subdomainRecordsInfo" class="info-card" style="padding: 16px;"></div>
-        </div>
-
-        <!-- Create Record -->
-        <div class="form-section" style="margin-bottom: 32px;">
-          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Record</h4>
-          
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label for="subdomainRecordContext">Context:</label>
-            <input id="subdomainRecordContext" type="text" class="form-control" placeholder="receivers">
-            <small class="form-help">Record context (e.g., "receivers", "social", "metadata")</small>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 16px;">
-            <label for="subdomainRecordDirective">Directive:</label>
-            <input id="subdomainRecordDirective" type="text" class="form-control" placeholder="*">
-            <small class="form-help">Record directive (e.g., "*", "twitter", "github")</small>
-          </div>
-
-          <div class="form-group" style="margin-bottom: 20px;">
-            <label for="subdomainRecordValue">Value:</label>
-            <input id="subdomainRecordValue" type="text" class="form-control" placeholder="account_tdx_...">
-            <small class="form-help">Record value (address, URL, or text)</small>
-          </div>
-
-          <button id="createSubdomainRecord" class="btn btn-primary">Create Record</button>
-        </div>
-
-        <!-- Existing Records -->
-        <div class="form-section">
-          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Records</h4>
-          <div id="subdomainRecordsList" class="info-card">
-            <p class="info-empty">Loading records...</p>
-          </div>
-        </div>
-
       </div>
     </div>
   </div>
