@@ -23,14 +23,20 @@ import {
   getBurnRegistrarBadgeManifest,
   getRegistrarInfoManifest,
   getRegistrarStatsManifest,
-  getTestDomainRegistrationManifest,
   getCreateDummyResourcesManifest,
   parseResourceCreationReceipt,
   validateResourceCreationParams,
   getPackageDeploymentInstructions,
   validatePackageAddress,
   getDappDefinitionManifest,
-  validateDappDefinitionParams
+  validateDappDefinitionParams,
+  getRegisterAndBondDomainManifest,
+  getSubregistryAddressManifest,
+  getCreateSubdomainManifest,
+  getDeleteSubdomainManifest,
+  getSetRecordManifest,
+  getDeleteRecordManifest,
+  getBatchSetRecordsManifest
 } from "./manifests";
 
 // ********** Global State **********
@@ -103,7 +109,6 @@ function initializeRadixIntegration() {
     updateResourceCreationVisibility();
     updateApplicationVisibility();
     updateAdminPanelVisibility();
-    updateManagementPanelVisibility();
     
     // Auto-detect registrar badges if tools component is loaded
     if (loadedToolsComponentAddress) {
@@ -134,7 +139,6 @@ function initializeUIElements() {
     // Tab contents
     deployContent: document.getElementById("deployContent"),
     adminContent: document.getElementById("adminContent"),
-    manageContent: document.getElementById("manageContent"),
     toolsContent: document.getElementById("toolsContent"),
     
     // Wallet gates and panels
@@ -142,8 +146,6 @@ function initializeUIElements() {
     deploymentWizard: document.getElementById("deploymentWizard"),
     adminWalletGate: document.getElementById("adminWalletGate"),
     adminFlow: document.getElementById("adminFlow"),
-    manageWalletGate: document.getElementById("manageWalletGate"),
-    managementPanel: document.getElementById("managementPanel"),
     toolsWalletGate: document.getElementById("toolsWalletGate"),
     toolsPanel: document.getElementById("toolsPanel"),
     
@@ -241,14 +243,7 @@ function initializeUIElements() {
     burnCompletionMessage: document.getElementById("burnCompletionMessage"),
     
     // Back buttons (admin now uses wizard navigation)
-    manageBackToMode: document.getElementById("manageBackToMode"),
     toolsBackToMode: document.getElementById("toolsBackToMode"),
-    
-    // Management panel elements
-    searchComponentAddress: document.getElementById("searchComponentAddress"),
-    searchComponent: document.getElementById("searchComponent"),
-    componentDetails: document.getElementById("componentDetails"),
-    componentInfo: document.getElementById("componentInfo"),
     
     // Tools panel elements - Global
     toolsComponentAddress: document.getElementById("toolsComponentAddress"),
@@ -353,9 +348,6 @@ function initializeNetworkDefaults() {
   if (elements.adminComponentAddress) {
     elements.adminComponentAddress.placeholder = defaults.placeholders.componentAddress;
   }
-  if (elements.searchComponentAddress) {
-    elements.searchComponentAddress.placeholder = defaults.placeholders.componentAddress;
-  }
   
   // Reserved domains textarea
   if (elements.reservedDomainsText) {
@@ -407,7 +399,7 @@ function initializeNetworkDefaults() {
   
   // Set dApp definition icon default (same as component icon by default)
   if (!elements.dappDefinitionIconUrl?.value) {
-    elements.dappDefinitionIconUrl.value = "https://arweave.net/7xbFEvPxojwXnxa3HczkgqsPrD--hmRDfToRmsra4VM";
+    elements.dappDefinitionIconUrl.value = "https://arweave.net/6xyWrmBS7w10cWQD81CkTKUoMCnzM7QcAzLgz2yW9kI";
   }
   
   // Network defaults initialized
@@ -764,7 +756,6 @@ function updateNetworkConfiguration() {
   updateResourceCreationVisibility();
   updateApplicationVisibility();
   updateAdminPanelVisibility();
-  updateManagementPanelVisibility();
   initializeNetworkDefaults();
 }
 
@@ -1019,11 +1010,7 @@ function showPackageDeploymentInstructions() {
           📱 Open ${currentNetwork === 'mainnet' ? 'Mainnet' : 'Stokenet'} Developer Console
         </a>
       </div>
-      
-      <div class="cost-estimate">
-        <p><strong>Estimated Cost:</strong> ${instructions.estimatedCost}</p>
-      </div>
-      
+            
       <div class="next-steps">
         <h4>After Package Deployment:</h4>
         <p>1. Copy the package address from the transaction receipt</p>
@@ -1384,192 +1371,6 @@ function backToModeFromAdmin() {
   });
 }
 
-// ********** Management Functions **********
-async function searchComponentForManagement() {
-  const componentAddress = elements.searchComponentAddress.value.trim();
-  
-  if (!componentAddress) {
-    showError("Please enter a component address");
-    return;
-  }
-  
-  if (!account) {
-    showError("Please connect your wallet first");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Loading component details...");
-    
-    // Query component details from Gateway API
-    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(componentAddress);
-    
-    if (componentDetails && componentDetails.details) {
-      await displayComponentInformation(componentAddress, componentDetails);
-      elements.componentDetails.classList.remove("hidden");
-      hideTransactionModal();
-    } else {
-      throw new Error("Component not found or invalid address");
-    }
-  } catch (error) {
-    console.error("Error searching component:", error);
-    hideTransactionModal();
-    showError("Failed to load component: " + error.message);
-  }
-}
-
-async function displayComponentInformation(componentAddress, componentDetails) {
-  // Show loading state
-  elements.componentInfo.innerHTML = `
-    <div class="info-card">
-      <p class="info-empty">Loading RNS statistics...</p>
-    </div>
-  `;
-  
-  try {
-    // Find the domain NFT resource from component state
-    const componentState = componentDetails.details?.state?.fields || [];
-    const domainResourceField = componentState.find(field => field.field_name === 'domain_nft_manager');
-    const domainResourceAddress = domainResourceField?.value || null;
-    
-    // Find the migrated domains KVStore
-    const migratedDomainsField = componentState.find(field => field.field_name === 'migrated_domains');
-    const migratedDomainsKvStore = migratedDomainsField?.value || null;
-    
-    let totalDomains = 0;
-    let migratedDomains = 0;
-    let uniqueUsers = 0;
-    
-    // Get total domains from the domain NFT resource
-    if (domainResourceAddress) {
-      try {
-        const resourceDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(domainResourceAddress);
-        totalDomains = parseInt(resourceDetails.details?.total_supply || "0");
-      } catch (e) {
-        console.error("Error fetching domain resource:", e);
-      }
-    }
-    
-    // Get migrated domains count from KVStore
-    if (migratedDomainsKvStore) {
-      try {
-        const keysResponse = await gatewayApi.state.innerClient.keyValueStoreKeys({
-          stateKeyValueStoreKeysRequest: {
-            key_value_store_address: migratedDomainsKvStore,
-            cursor: null,
-            limit_per_page: 1
-          }
-        });
-        migratedDomains = keysResponse.total_count || 0;
-      } catch (e) {
-        console.error("Error fetching migrated domains:", e);
-      }
-    }
-    
-    // Get unique users by querying domain holders
-    if (domainResourceAddress) {
-      try {
-        // Query all NFT holders for this resource
-        const holdersResponse = await gatewayApi.state.innerClient.nonFungibleIds({
-          stateNonFungibleIdsRequest: {
-            resource_address: domainResourceAddress,
-            cursor: null,
-            limit_per_page: 100
-          }
-        });
-        
-        // Count unique holders
-        const holders = new Set();
-        if (holdersResponse.items) {
-          for (const item of holdersResponse.items) {
-            if (item.owner_entity_address) {
-              holders.add(item.owner_entity_address);
-            }
-          }
-        }
-        uniqueUsers = holders.size;
-      } catch (e) {
-        console.error("Error fetching unique users:", e);
-        // If we can't get detailed holder info, estimate based on total supply
-        uniqueUsers = Math.min(totalDomains, Math.ceil(totalDomains * 0.8));
-      }
-    }
-    
-    // Build statistics display
-    const statsHTML = `
-    <div class="info-card">
-        <h4>RNS V2 Statistics</h4>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">${totalDomains.toLocaleString()}</div>
-            <div class="stat-label">Domains Issued</div>
-      </div>
-          <div class="stat-item">
-            <div class="stat-value">${migratedDomains.toLocaleString()}</div>
-            <div class="stat-label">Domains Migrated</div>
-      </div>
-          <div class="stat-item">
-            <div class="stat-value">${uniqueUsers.toLocaleString()}</div>
-            <div class="stat-label">Unique Users</div>
-      </div>
-    </div>
-    </div>
-    
-    `;
-    
-    elements.componentInfo.innerHTML = statsHTML;
-  } catch (error) {
-    console.error("Error loading RNS statistics:", error);
-    elements.componentInfo.innerHTML = `
-    <div class="info-card">
-        <p class="info-error">Failed to load RNS statistics. Please try again.</p>
-    </div>
-  `;
-  }
-}
-
-async function loadComponentTransactions(componentAddress) {
-  try {
-    // Query recent transactions involving this component
-    const transactionHistory = await gatewayApi.stream.innerClient.streamTransactions({
-      stateStreamTransactionsRequest: {
-        affected_global_entities_filter: [componentAddress],
-        limit_per_page: 10,
-        order: 'desc'
-      }
-    });
-    
-    if (transactionHistory && transactionHistory.items && transactionHistory.items.length > 0) {
-      const transactionsHTML = transactionHistory.items.map(tx => {
-        const txHash = tx.intent_hash || tx.state_version || 'Unknown';
-        const status = tx.transaction_status || 'Unknown';
-        const timestamp = tx.confirmed_at ? new Date(tx.confirmed_at).toLocaleString() : 'N/A';
-        
-        return `
-        <div class="transaction-item">
-          <div class="tx-header">
-            <span class="tx-id">${txHash.substring(0, 20)}...${txHash.substring(txHash.length - 10)}</span>
-            <span class="tx-status status-${status.toLowerCase()}">${status}</span>
-          </div>
-          <div class="tx-details">
-            <span class="tx-time">${timestamp}</span>
-            <a href="https://${currentNetwork === 'mainnet' ? 'dashboard' : 'stokenet-dashboard'}.radixdlt.com/transaction/${tx.intent_hash}" 
-               target="_blank" class="tx-link">View →</a>
-          </div>
-        </div>
-      `;
-      }).join('');
-      
-      elements.recentTransactions.innerHTML = transactionsHTML;
-    } else {
-      elements.recentTransactions.innerHTML = '<p class="info-empty">No recent transactions found</p>';
-    }
-  } catch (error) {
-    console.error("Error loading transactions:", error);
-    elements.recentTransactions.innerHTML = '<p class="info-error">Failed to load transaction history. This component may not have any transactions yet.</p>';
-  }
-}
-
 // ********** Reserved Domains Management **********
 function previewReservedDomainsUpload() {
   const text = elements.reservedDomainsText.value.trim();
@@ -1596,7 +1397,6 @@ function previewReservedDomainsUpload() {
     html += `<div class="preview-summary">
       <h4>✅ Upload Summary:</h4>
       <p><strong>Domains to upload:</strong> ${domains.length}</p>
-      <p><strong>Estimated cost:</strong> ${cost.totalFee} XRD</p>
     </div>
     
     <div class="domains-list">
@@ -2606,8 +2406,6 @@ function switchToMode(mode) {
   elements.applicationFlow?.classList.add("hidden");
   elements.adminContent?.classList.add("hidden");
   elements.adminContent?.classList.remove("active");
-  elements.manageContent?.classList.add("hidden");
-  elements.manageContent?.classList.remove("active");
   elements.toolsContent?.classList.add("hidden");
   elements.toolsContent?.classList.remove("active");
   elements.progressTracker?.classList.add('hidden');
@@ -2636,14 +2434,6 @@ function switchToMode(mode) {
     } else {
       console.error("❌ adminContent element not found!");
     }
-  } else if (mode === 'manage') {
-    if (elements.manageContent) {
-      elements.manageContent.classList.remove("hidden");
-      elements.manageContent.classList.add("active");
-      updateManagementPanelVisibility(); // Update visibility based on wallet connection
-    } else {
-      console.error("❌ manageContent element not found!");
-    }
   } else if (mode === 'tools') {
     if (elements.toolsContent) {
       elements.toolsContent.classList.remove("hidden");
@@ -2661,8 +2451,6 @@ function backToModeSelection() {
   elements.adminContent?.classList.remove("active");
   elements.toolsContent?.classList.add("hidden");
   elements.toolsContent?.classList.remove("active");
-  elements.manageContent?.classList.add("hidden");
-  elements.manageContent?.classList.remove("active");
   
   // Reset component config internal elements to default state
   if (elements.adminWalletGate) {
@@ -2787,7 +2575,6 @@ function updateApplicationVisibility() {
       elements.walletConnectionGate.classList.remove("hidden");
       elements.applicationFlow.classList.add("hidden");
       elements.adminContent?.classList.add("hidden");
-      elements.manageContent?.classList.add("hidden");
     }
   }
 }
@@ -2807,25 +2594,6 @@ function updateAdminPanelVisibility() {
       // No wallet - show gate, hide admin flow
       elements.adminWalletGate.classList.remove("hidden");
       elements.adminFlow.classList.add("hidden");
-    }
-  }
-}
-
-function updateManagementPanelVisibility() {
-  // Only update if we're actually in manage mode
-  if (selectedMode !== 'manage') {
-    return;
-  }
-  
-  if (elements.manageWalletGate && elements.managementPanel) {
-    if (account) {
-      // Wallet connected - show management panel, hide gate
-      elements.manageWalletGate.classList.add("hidden");
-      elements.managementPanel.classList.remove("hidden");
-    } else {
-      // No wallet - show gate, hide management panel
-      elements.manageWalletGate.classList.remove("hidden");
-      elements.managementPanel.classList.add("hidden");
     }
   }
 }
@@ -2949,6 +2717,13 @@ async function loadToolsComponent() {
     
     // Auto-load registrar badges (non-silent to show any errors)
     await detectRegistrarBadges(false);
+    
+    // Auto-load price ladder and accepted payment resources
+    await loadPriceLadder();
+    await loadAcceptedPaymentResources();
+    
+    // Auto-load user domains
+    await detectUserDomains();
     
     // Update visibility to show tool sections now that component is loaded
     updateToolsPanelVisibility();
@@ -3292,12 +3067,60 @@ async function requestRegistrarBadge() {
   }
 }
 
+/**
+ * Query registrar info by directly reading the NFT data
+ * @param {string} registrarId - The registrar badge NFT ID (in format [hex] for Bytes type)
+ * @param {string} registrarResource - The registrar badge resource address
+ * @returns {Promise<object|null>} Registrar info containing name, fee_percentage, etc.
+ */
+async function queryRegistrarInfo(registrarId, registrarResource) {
+  if (!registrarResource) {
+    console.error('No registrar resource provided');
+    return null;
+  }
+  
+  try {
+    // Query the NFT data directly from the Gateway API
+    const nftResponse = await gatewayApi.state.innerClient.nonFungibleData({
+      stateNonFungibleDataRequest: {
+        resource_address: registrarResource,
+        non_fungible_ids: [registrarId] // Gateway API expects the [hex] format
+      }
+    });
+    
+    // Extract registrar info from NFT data
+    // RegistrarInfo struct: { name: String, icon_url: String, website_url: String, fee_percentage: Decimal }
+    if (nftResponse?.non_fungible_ids && nftResponse.non_fungible_ids.length > 0) {
+      const nftData = nftResponse.non_fungible_ids[0];
+      const data = nftData.data;
+      
+      // Parse the structured data
+      if (data?.programmatic_json?.fields) {
+        const fields = data.programmatic_json.fields;
+        return {
+          name: fields[0]?.value || 'Unknown Registrar',
+          icon_url: fields[1]?.value || '',
+          website_url: fields[2]?.value || '',
+          fee_percentage: parseFloat(fields[3]?.value || '0')
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error querying registrar NFT data:', error);
+    return null;
+  }
+}
+
 async function detectRegistrarBadges(silent = false) {
   try {
     if (!loadedToolsComponentAddress) {
       if (!silent) {
         elements.registrarBadgesList.classList.add("hidden");
       }
+      // Clear badge list for Test Data Setup
+      window.userRegistrarBadges = [];
       return;
     }
     
@@ -3305,6 +3128,8 @@ async function detectRegistrarBadges(silent = false) {
       if (!silent) {
         elements.registrarBadgesList.classList.add("hidden");
       }
+      // Clear badge list for Test Data Setup
+      window.userRegistrarBadges = [];
       return;
     }
     
@@ -3325,6 +3150,8 @@ async function detectRegistrarBadges(silent = false) {
         showError("Could not find registrar badge resource in component. This may not be an RNS component.");
       }
       elements.registrarBadgesList.classList.add("hidden");
+      // Clear badge list for Test Data Setup
+      window.userRegistrarBadges = [];
       return;
     }
     
@@ -3345,6 +3172,8 @@ async function detectRegistrarBadges(silent = false) {
         showError("No registrar badges found in your wallet for this component");
       }
       elements.registrarBadgesList.classList.add("hidden");
+      // Clear badge list for Test Data Setup
+      window.userRegistrarBadges = [];
       return;
     }
     
@@ -3362,6 +3191,8 @@ async function detectRegistrarBadges(silent = false) {
         showError("No registrar badges found in your wallet for this component");
       }
       elements.registrarBadgesList.classList.add("hidden");
+      // Clear badge list for Test Data Setup
+      window.userRegistrarBadges = [];
       return;
     }
     
@@ -3379,12 +3210,46 @@ async function detectRegistrarBadges(silent = false) {
     elements.registrarBadgesContent.innerHTML = badgesHTML;
     elements.registrarBadgesList.classList.remove("hidden");
     
+    // Populate global badge list for Test Data Setup module
+    // Fetch registrar info for each badge to get fee percentage
+    const badgeInfoPromises = allBadgeIds.map(async badgeId => {
+      try {
+        const registrarInfo = await queryRegistrarInfo(badgeId, registrarBadgeResource);
+        return {
+          id: badgeId,
+          name: registrarInfo?.name || 'Registrar Badge',
+          feePercentage: registrarInfo?.fee_percentage || 0,
+          resource: registrarBadgeResource
+        };
+      } catch (error) {
+        console.error(`Error fetching registrar info for ${badgeId}:`, error);
+        return {
+          id: badgeId,
+          name: 'Registrar Badge',
+          feePercentage: 0,
+          resource: registrarBadgeResource
+        };
+      }
+    });
+    
+    window.userRegistrarBadges = await Promise.all(badgeInfoPromises);
+    
+    // Update domain registrar select dropdown
+    updateDomainRegistrarSelect();
+    
     if (!silent) {
       hideTransactionModal();
       showSuccess(`✅ Found ${allBadgeIds.length} registrar badge${allBadgeIds.length === 1 ? '' : 's'}!`);
     }
   } catch (error) {
     console.error("❌ Badge detection error:", error);
+    
+    // Clear badge list on error
+    window.userRegistrarBadges = [];
+    
+    // Update domain registrar select dropdown
+    updateDomainRegistrarSelect();
+    
     if (!silent) {
       hideTransactionModal();
       showError("Failed to detect registrar badges: " + (error.message || error.error || JSON.stringify(error)));
@@ -3451,37 +3316,40 @@ async function loadRegistrarInfo(badgeId) {
     let registrarStats = null;
     try {
       const statsKvStore = componentState.find(f => f.field_name === 'registrar_stats');
+      
       if (statsKvStore && statsKvStore.value) {
-        // Convert [hex] format to hex for the API query
-        const hexValue = badgeId.startsWith('[') && badgeId.endsWith(']') 
-          ? badgeId.slice(1, -1)
-          : badgeId;
-        
-        
+        // NonFungibleLocalId should be passed as-is with the [hex] format
         const statsResponse = await gatewayApi.state.innerClient.keyValueStoreData({
           stateKeyValueStoreDataRequest: {
             key_value_store_address: statsKvStore.value,
             keys: [{
               key_json: {
-                kind: 'Bytes',
-                element_kind: 'U8',
-                hex: hexValue
+                kind: 'NonFungibleLocalId',
+                value: badgeId  // Use the full format e.g., "[534804d2c49e626b987d9d6baeaf8989]"
               }
             }]
           }
         });
         
-        
         if (statsResponse.entries && statsResponse.entries.length > 0) {
           const statsFields = statsResponse.entries[0].value.programmatic_json.fields;
+          
           registrarStats = {};
           for (const field of statsFields) {
-            registrarStats[field.field_name] = field.value;
+            // Special handling for HashMap fields
+            if (field.field_name === 'fees_earned_current' || 
+                field.field_name === 'fees_earned_cumulative' || 
+                field.field_name === 'domains_bonded') {
+              // Extract entries from the HashMap - entries are directly on the field object
+              registrarStats[field.field_name] = field.entries || [];
+            } else {
+              registrarStats[field.field_name] = field.value;
+            }
           }
         }
       }
     } catch (e) {
-      console.error("Could not fetch registrar stats:", e);
+      console.error("❌ [Registrar] Error fetching registrar stats:", e);
     }
     
     // Display registrar info
@@ -3527,60 +3395,59 @@ async function loadRegistrarInfo(badgeId) {
     elements.updateRegistrarWebsiteUrl.value = registrarData.website_url || '';
     elements.updateRegistrarFeePercentage.value = registrarData.fee_percentage || '';
     
-    // Display accumulated fees
-    if (registrarStats && registrarStats.fees_earned) {
+    // Display accumulated fees (using fees_earned_current for withdrawable amounts)
+    if (registrarStats && registrarStats.fees_earned_current) {
       let feesHTML = '';
-      const feesEarned = registrarStats.fees_earned;
+      const feesEarned = registrarStats.fees_earned_current;
       const domainsBonded = registrarStats.domains_bonded || [];
       
-      
-      // Check if it's a HashMap with entries
+      // Check if it's a HashMap with entries and filter out zero amounts
       if (Array.isArray(feesEarned) && feesEarned.length > 0) {
         for (const entry of feesEarned) {
-          const resourceAddress = entry.key;
-          const amount = entry.value;
+          // Extract resource address from the entry key
+          const resourceAddress = entry.key?.value || entry.key;
+          // Extract amount from the entry value (Decimal type)
+          const amount = entry.value?.value || entry.value;
           
-          // Find how many domains have been bonded with this resource
+          // Skip zero amounts (already withdrawn)
+          if (parseFloat(amount) === 0) {
+            continue;
+          }
+          
+          // Find how many domains have been bonded with this resource for display only
           let domainsCount = 0;
           if (Array.isArray(domainsBonded)) {
-            const bondEntry = domainsBonded.find(b => b.key === resourceAddress);
-            domainsCount = bondEntry ? parseInt(bondEntry.value) : 0;
+            const bondEntry = domainsBonded.find(b => {
+              const bondResourceAddr = b.key?.value || b.key;
+              return bondResourceAddr === resourceAddress;
+            });
+            domainsCount = bondEntry ? parseInt(bondEntry.value?.value || bondEntry.value) : 0;
           }
           
-          const canWithdraw = domainsCount >= 100;
-          const progressText = `${domainsCount}/100 domains bonded`;
-          
-          if (canWithdraw) {
-            feesHTML += `
-              <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #2ecc71; border-radius: 4px; margin-bottom: 8px; background: rgba(46, 204, 113, 0.05);">
-                <div style="flex: 1;">
-                  <div style="font-weight: bold; margin-bottom: 4px;">Amount: ${amount}</div>
-                  <div class="address-value" style="font-size: 0.85em; color: #888; margin-bottom: 4px;">${resourceAddress}</div>
-                  <div style="font-size: 0.85em; color: #2ecc71;">✅ ${progressText} - Eligible for withdrawal</div>
-                </div>
-                <button class="btn btn-success" onclick="window.withdrawSpecificFee('${resourceAddress}')">Withdraw</button>
+          // Display withdrawable fees
+          feesHTML += `
+            <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #2ecc71; border-radius: 4px; margin-bottom: 8px; background: rgba(46, 204, 113, 0.05);">
+              <div style="flex: 1;">
+                <div style="font-weight: bold; margin-bottom: 4px;">💰 Available: ${amount}</div>
+                <div class="address-value" style="font-size: 0.85em; color: #888; margin-bottom: 4px;">${resourceAddress}</div>
+                <div style="font-size: 0.85em; color: #888;">📊 Lifetime domains bonded: ${domainsCount}</div>
               </div>
-            `;
-          } else {
-            feesHTML += `
-              <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #666; border-radius: 4px; margin-bottom: 8px; background: rgba(255, 255, 255, 0.02);">
-                <div style="flex: 1;">
-                  <div style="font-weight: bold; margin-bottom: 4px;">Amount: ${amount}</div>
-                  <div class="address-value" style="font-size: 0.85em; color: #888; margin-bottom: 4px;">${resourceAddress}</div>
-                  <div style="font-size: 0.85em; color: #e74c3c;">🔒 ${progressText} - Need ${100 - domainsCount} more domains</div>
-                </div>
-                <button class="btn btn-secondary" disabled style="opacity: 0.5; cursor: not-allowed;">Locked</button>
-              </div>
-            `;
-          }
+              <button class="btn btn-success" onclick="window.withdrawSpecificFee('${resourceAddress}')">Withdraw</button>
+            </div>
+          `;
+        }
+        
+        // If all entries were zero, show empty message
+        if (!feesHTML) {
+          feesHTML = '<p class="info-empty">No fees available to withdraw</p>';
         }
       } else {
-        feesHTML = '<p class="info-empty">No fees accumulated yet</p>';
+        feesHTML = '<p class="info-empty">No fees available to withdraw</p>';
       }
       
       elements.accumulatedFeesContent.innerHTML = feesHTML;
     } else {
-      elements.accumulatedFeesContent.innerHTML = '<p class="info-empty">No fees accumulated yet</p>';
+      elements.accumulatedFeesContent.innerHTML = '<p class="info-empty">No fees available to withdraw</p>';
     }
     
     // Show the modal
@@ -3785,6 +3652,1198 @@ async function burnRegistrarBadge() {
   }
 }
 
+// ========================================
+// DOMAIN MANAGEMENT
+// ========================================
+
+// Domain management state
+let userDomains = [];
+let currentManagedDomain = null;
+let acceptedPaymentResources = [];
+let priceLadder = {};
+
+// Load price ladder from component
+async function loadPriceLadder() {
+  if (!loadedToolsComponentAddress) {
+    return;
+  }
+
+  try {
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+
+    // Find the price_ladder field
+    const priceLadderField = componentState.find(f => f.field_name === 'price_ladder');
+    
+    if (priceLadderField && priceLadderField.entries) {
+      priceLadder = {};
+      for (const entry of priceLadderField.entries) {
+        const length = parseInt(entry.key?.value || entry.key);
+        const price = parseFloat(entry.value?.value || entry.value);
+        priceLadder[length] = price;
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error loading price ladder:", error);
+    // Set default fallback
+    priceLadder = {
+      1: 2250,
+      2: 240,
+      3: 120,
+      4: 40
+    };
+  }
+}
+
+// Calculate domain base price from pricing tier
+function calculateDomainPrice(domainName) {
+  // Extract SLD (second-level domain) part - everything before first dot
+  const sld = domainName.split('.')[0];
+  const length = sld.length;
+  
+  // Look up price in price ladder, default to 4 for 5+ characters
+  return priceLadder[length] || 4;
+}
+
+// Load accepted payment resources
+async function loadAcceptedPaymentResources() {
+  if (!loadedToolsComponentAddress) {
+    return;
+  }
+
+  try {
+    
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+
+    // Find the bond_vaults KeyValueStore field
+    const bondVaultsField = componentState.find(f => f.field_name === 'bond_vaults');
+    
+    if (!bondVaultsField || !bondVaultsField.value) {
+      const select = document.getElementById("domainPaymentResourceSelect");
+      if (select) {
+        select.innerHTML = '<option value="">No payment resources configured</option>';
+      }
+      return;
+    }
+
+    const kvStoreAddress = bondVaultsField.value;
+
+    // Enumerate all keys (payment resources) using pagination
+    acceptedPaymentResources = [];
+    let cursor = undefined;
+    
+    do {
+      
+      const response = await gatewayApi.state.innerClient.keyValueStoreKeys({
+        stateKeyValueStoreKeysRequest: {
+          key_value_store_address: kvStoreAddress,
+          cursor: cursor,
+          limit_per_page: 100
+        }
+      });
+      
+      
+      if (response.items && response.items.length > 0) {
+        // Extract resource addresses from keys
+        for (const item of response.items) {
+          const resourceAddress = item.key?.programmatic_json?.value || 
+                                  item.key?.typed?.value ||
+                                  item.key_json?.value;
+          
+          if (resourceAddress) {
+            acceptedPaymentResources.push(resourceAddress);
+          }
+        }
+      }
+      
+      cursor = response.next_cursor;
+    } while (cursor !== null && cursor !== undefined);
+
+
+    // Update dropdown
+    const select = document.getElementById("domainPaymentResourceSelect");
+    if (!select) return;
+
+    if (acceptedPaymentResources.length === 0) {
+      select.innerHTML = '<option value="">No payment resources configured</option>';
+      return;
+    }
+
+    select.innerHTML = acceptedPaymentResources.map((resource, index) => {
+      // Get a short version of the resource address
+      const shortAddress = resource.substring(0, 18) + '...' + resource.substring(resource.length - 6);
+      return `<option value="${resource}">${shortAddress}</option>`;
+    }).join('');
+
+
+  } catch (error) {
+    console.error("❌ [Payment Resources] Error loading payment resources:", error);
+    const select = document.getElementById("domainPaymentResourceSelect");
+    if (select) {
+      select.innerHTML = '<option value="">Error loading resources</option>';
+    }
+  }
+}
+
+// Register a new domain
+async function registerNewDomain() {
+  if (!account) {
+    showError("Please connect your wallet first");
+    return;
+  }
+
+  if (!loadedToolsComponentAddress) {
+    showError("Please load an RNS component first");
+    return;
+  }
+
+  const domainName = document.getElementById("newDomainName").value.trim();
+  const bondAmount = document.getElementById("domainBondAmount").value;
+  const paymentResource = document.getElementById("domainPaymentResourceSelect").value.trim();
+  const registrarSelectEl = document.getElementById("domainRegistrarSelect");
+  const registrarIndex = parseInt(registrarSelectEl.value);
+
+  if (!domainName) {
+    showError("Please enter a domain name");
+    return;
+  }
+
+  if (!bondAmount || parseFloat(bondAmount) <= 0) {
+    showError("Please enter a valid bond amount");
+    return;
+  }
+
+  if (!paymentResource) {
+    showError("Please select a payment resource");
+    return;
+  }
+
+  if (isNaN(registrarIndex) || !window.userRegistrarBadges || registrarIndex >= window.userRegistrarBadges.length) {
+    showError("Please select a valid registrar badge");
+    return;
+  }
+
+  const selectedRegistrar = window.userRegistrarBadges[registrarIndex];
+
+  try {
+    showTransactionModal("Registering domain...");
+
+    // Add .xrd TLD if not present
+    const fullDomainName = domainName.includes('.') ? domainName : `${domainName}.xrd`;
+
+    // Calculate base price from pricing tier (what registrar fee is based on)
+    const basePrice = calculateDomainPrice(fullDomainName);
+
+    const manifest = getRegisterAndBondDomainManifest({
+      componentAddress: loadedToolsComponentAddress,
+      registrarResource: selectedRegistrar.resource,
+      registrarId: selectedRegistrar.id,
+      domainName: fullDomainName,
+      paymentResource: paymentResource,
+      bondAmount: bondAmount,
+      basePrice: basePrice,
+      registrarName: selectedRegistrar.name,
+      registrarFeePercentage: selectedRegistrar.feePercentage,
+      accountAddress: account.address,
+      networkId: currentNetwork === 'mainnet' ? '1' : '2'
+    });
+
+
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+
+    if (result.isErr()) {
+      console.error("❌ [Domain Registration] Wallet returned error:", result.error);
+      throw new Error(JSON.stringify(result.error));
+    }
+
+    const receipt = await gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+
+    if (receipt.transaction.transaction_status === 'CommittedSuccess') {
+      hideTransactionModal();
+      showSuccess(`✅ Domain "${fullDomainName}" registered successfully!`);
+
+      // Clear form
+      document.getElementById("newDomainName").value = '';
+      document.getElementById("domainBondAmount").value = '';
+
+      // Refresh domains list
+      await detectUserDomains();
+    } else {
+      throw new Error("Transaction failed: " + receipt.transaction.transaction_status);
+    }
+  } catch (error) {
+    hideTransactionModal();
+    console.error("❌ Domain registration error:", error);
+    showError("Failed to register domain: " + (error.message || error.error || JSON.stringify(error)));
+  }
+}
+
+// Detect domains owned by the user
+async function detectUserDomains() {
+  if (!account || !loadedToolsComponentAddress) {
+    return;
+  }
+
+  try {
+
+    // Get component details
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+
+    // Find domain resource
+    const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+    if (!domainManagerField || !domainManagerField.value) {
+      console.error("❌ [Domain Detection] Could not find domain_manager field in component");
+      return;
+    }
+
+    const domainResource = domainManagerField.value;
+
+    // Get user's domain NFTs
+    const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
+    
+    const domainNfts = [];
+    if (accountDetails.non_fungible_resources?.items) {
+      for (const nftResource of accountDetails.non_fungible_resources.items) {
+        if (nftResource.resource_address === domainResource) {
+          const nftIds = nftResource.vaults?.items?.[0]?.items || [];
+          domainNfts.push(...nftIds);
+        }
+      }
+    }
+
+
+    if (domainNfts.length === 0) {
+      userDomains = [];
+      updateDomainsDisplay();
+      return;
+    }
+
+    // Get domain data for each NFT
+    const domainDataPromises = domainNfts.map(async (nftId) => {
+      try {
+        // The Gateway API expects the NFT IDs in a specific format
+        const response = await gatewayApi.state.innerClient.nonFungibleData({
+          stateNonFungibleDataRequest: {
+            resource_address: domainResource,
+            non_fungible_ids: [nftId]
+          }
+        });
+
+        // The response structure is response.non_fungible_ids
+        if (response && response.non_fungible_ids && response.non_fungible_ids.length > 0) {
+          const nftData = response.non_fungible_ids[0];
+          const data = nftData.data;
+          const fields = data?.programmatic_json?.fields || [];
+          const domainName = fields.find(f => f.field_name === 'name')?.value || 'Unknown';
+
+
+          return {
+            id: nftId,
+            name: domainName,
+            resource: domainResource
+          };
+        }
+        return null;
+      } catch (error) {
+        console.error(`     ❌ Error fetching domain data for ${nftId}:`, error);
+        console.error(`     Error details:`, error.message);
+        return null;
+      }
+    });
+
+    userDomains = (await Promise.all(domainDataPromises)).filter(Boolean);
+
+    updateDomainsDisplay();
+  } catch (error) {
+    console.error("❌ [Domain Detection] Error detecting domains:", error);
+    console.error("   Error details:", error.message);
+    console.error("   Stack:", error.stack);
+  }
+}
+
+// Update the domains list display
+function updateDomainsDisplay() {
+  const domainsList = document.getElementById("domainsList");
+  const domainsContent = document.getElementById("domainsContent");
+
+  if (!domainsList || !domainsContent) {
+    console.error("❌ [Domain Display] domainsList or domainsContent element not found!");
+    return;
+  }
+
+  if (userDomains.length === 0) {
+    domainsList.classList.add("hidden");
+    return;
+  }
+
+  domainsList.classList.remove("hidden");
+
+  domainsContent.innerHTML = userDomains.map(domain => `
+    <div class="info-row" style="display: flex; justify-content: space-between; align-items: center; padding: 16px; border-bottom: 1px solid #e2e8f0;">
+      <div style="flex: 1;">
+        <p style="margin: 0 0 4px 0; font-weight: 600; color: #1e293b;">${domain.name}</p>
+        <p style="margin: 0; font-size: 0.85em; color: #64748b; font-family: monospace;">NFT ID: ${domain.id.substring(0, 20)}...</p>
+      </div>
+      <button class="btn btn-secondary btn-sm" onclick="openDomainModal('${domain.id}', '${domain.name}')" style="white-space: nowrap;">
+        ⚙️ Manage
+      </button>
+    </div>
+  `).join('');
+  
+}
+
+// Open domain management modal
+window.openDomainModal = async function(domainId, domainName) {
+  if (!loadedToolsComponentAddress) {
+    showError("Please load an RNS component first");
+    return;
+  }
+
+
+  currentManagedDomain = { id: domainId, name: domainName };
+
+  const modal = document.getElementById("domainModal");
+  const modalTitle = document.getElementById("domainModalTitle");
+  const domainInfoContent = document.getElementById("domainInfoContent");
+
+  if (!modal || !modalTitle || !domainInfoContent) {
+    console.error("❌ [Modal] Modal elements not found");
+    return;
+  }
+
+  // Update modal title
+  modalTitle.textContent = `Manage: ${domainName}`;
+
+  // Display domain info
+  domainInfoContent.innerHTML = `
+    <div style="padding: 16px;">
+      <div class="info-row">
+        <span class="info-label">Domain Name:</span>
+        <span class="info-value">${domainName}</span>
+      </div>
+      <div class="info-row">
+        <span class="info-label">NFT ID:</span>
+        <span class="info-value" style="font-family: monospace; font-size: 0.9em;">${domainId}</span>
+      </div>
+    </div>
+  `;
+
+  // Reset to subdomains tab (ensure it's the active tab)
+  switchDomainTab('subdomains');
+
+  // Show modal
+  modal.classList.remove("hidden");
+
+  // Load subdomains and records (async but don't wait - they'll load in background)
+  loadDomainSubdomains().catch(err => {
+    console.error("❌ [Modal] Failed to load subdomains:", err);
+  });
+  loadDomainRecords().catch(err => {
+    console.error("❌ [Modal] Failed to load records:", err);
+  });
+};
+
+// Close modal
+function closeDomainModal() {
+  const modal = document.getElementById("domainModal");
+  if (modal) {
+    modal.classList.add("hidden");
+  }
+  currentManagedDomain = null;
+}
+
+// Tab switching
+function switchDomainTab(tabName) {
+  const tabs = document.querySelectorAll('.tab-button');
+  const contents = document.querySelectorAll('.tab-content');
+
+  tabs.forEach(tab => {
+    if (tab.dataset.tab === tabName) {
+      tab.classList.add('active');
+      tab.style.borderBottom = '2px solid #3b82f6';
+      tab.style.color = '#3b82f6';
+    } else {
+      tab.classList.remove('active');
+      tab.style.borderBottom = 'none';
+      tab.style.color = '#64748b';
+    }
+  });
+
+  contents.forEach(content => {
+    if (content.id === `${tabName}Tab`) {
+      content.style.display = 'block';
+    } else {
+      content.style.display = 'none';
+    }
+  });
+}
+
+// Load subdomains for current domain
+async function loadDomainSubdomains() {
+  const subdomainsList = document.getElementById("subdomainsList");
+  if (!subdomainsList || !currentManagedDomain) {
+    return;
+  }
+
+  subdomainsList.innerHTML = '<p class="info-empty">Loading subdomains...</p>';
+
+  try {
+
+    // Get subregistry address from domain NFT metadata
+    let subregistryAddress = currentManagedDomain.subregistryAddress;
+    
+    if (!subregistryAddress) {
+      
+      // Get component details for domain resource
+      const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+      const componentState = componentDetails.details?.state?.fields || [];
+      const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+      
+      if (!domainManagerField) {
+        console.error("❌ [Subdomains] Could not find domain resource");
+        subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+        return;
+      }
+      
+      const domainResource = domainManagerField.value;
+      
+      // Query the domain NFT data to get subregistry address
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainResource,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+
+      if (response && response.non_fungible_ids && response.non_fungible_ids.length > 0) {
+        const nftData = response.non_fungible_ids[0];
+        const data = nftData.data;
+        const fields = data?.programmatic_json?.fields || [];
+        
+        // Find subregistry_component_address field
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        
+        if (subregistryField && subregistryField.value) {
+          subregistryAddress = subregistryField.value;
+        }
+      }
+      
+      if (!subregistryAddress) {
+        console.error("❌ [Subdomains] Could not find subregistry address in domain NFT metadata");
+        subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+        return;
+      }
+
+      currentManagedDomain.subregistryAddress = subregistryAddress;
+    }
+
+    // Get subregistry details to find subdomains
+    const subregistryDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(subregistryAddress);
+    const subregistryState = subregistryDetails.details?.state?.fields || [];
+
+    // Find subdomains KeyValueStore
+    const subdomainsField = subregistryState.find(f => f.field_name === 'subdomains');
+    
+    if (!subdomainsField || !subdomainsField.value) {
+      subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+      return;
+    }
+
+    // Query the subdomains KeyValueStore
+    const kvStoreAddress = subdomainsField.value;
+    
+    // Get the subdomain count from the subregistry
+    const subdomainCountField = subregistryState.find(f => f.field_name === 'subdomain_count');
+    const subdomainCount = subdomainCountField?.value ? parseInt(subdomainCountField.value) : 0;
+    
+    
+    if (subdomainCount === 0) {
+      subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+      return;
+    }
+
+    // Enumerate all subdomains using pagination
+    
+    let allSubdomains = [];
+    let cursor = undefined;
+    
+    do {
+      
+      // Use keyValueStoreKeys for enumeration (not keyValueStoreData!)
+      const response = await gatewayApi.state.innerClient.keyValueStoreKeys({
+        stateKeyValueStoreKeysRequest: {
+          key_value_store_address: kvStoreAddress,
+          cursor: cursor,
+          limit_per_page: 100
+        }
+      });
+      
+      
+      if (response.items && response.items.length > 0) {
+        allSubdomains.push(...response.items);
+      }
+      
+      cursor = response.next_cursor;
+    } while (cursor !== null && cursor !== undefined);
+    
+    
+    if (allSubdomains.length === 0) {
+      subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+      return;
+    }
+
+    // Parse subdomain names from keys
+    const subdomains = allSubdomains.map(item => {
+      // keyValueStoreKeys returns just the key, not the value
+      const name = item.key?.programmatic_json?.value || 
+                   item.key?.typed?.value ||
+                   item.key_json?.value ||
+                   'Unknown';
+      
+      return {
+        name: name,
+        createdAt: null // We'd need a separate call to get creation timestamps
+      };
+    }).filter(s => s.name !== 'Unknown');
+
+    // Display subdomains with delete buttons
+    const subdomainsHtml = subdomains.map(subdomain => {
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 6px;">
+          <div style="font-weight: 500;">${subdomain.name}.${currentManagedDomain.name}</div>
+          <button 
+            onclick="deleteSubdomain('${subdomain.name}')"
+            style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em;"
+            onmouseover="this.style.background='#dc2626'"
+            onmouseout="this.style.background='#ef4444'">
+            Delete
+          </button>
+        </div>
+      `;
+    }).join('');
+
+    subdomainsList.innerHTML = `
+      <div style="margin-bottom: 12px; padding: 8px 12px; background: rgba(34, 197, 94, 0.1); border-left: 3px solid #22c55e; border-radius: 4px;">
+        <strong>${subdomains.length}</strong> subdomain${subdomains.length === 1 ? '' : 's'} found
+      </div>
+      ${subdomainsHtml}
+    `;
+  } catch (error) {
+    console.error("❌ [Subdomains] Error loading subdomains:", error);
+    console.error("   Error details:", error.message);
+    // If there's an error, it's likely the domain has no subdomains yet (normal for new domains)
+    subdomainsList.innerHTML = '<p class="info-empty">No subdomains yet</p>';
+  }
+}
+
+// Load records for current domain
+async function loadDomainRecords() {
+  const recordsList = document.getElementById("recordsList");
+  if (!recordsList || !currentManagedDomain) {
+    return;
+  }
+
+  recordsList.innerHTML = '<p class="info-empty">Loading records...</p>';
+
+  try {
+
+    // Get subregistry address (should be cached by now)
+    if (!currentManagedDomain.subregistryAddress) {
+      
+      const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+      const componentState = componentDetails.details?.state?.fields || [];
+      const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+      
+      if (!domainManagerField) {
+        recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+        return;
+      }
+      
+      const domainResource = domainManagerField.value;
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainResource,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+      if (response?.non_fungible_ids?.[0]) {
+        const fields = response.non_fungible_ids[0].data?.programmatic_json?.fields || [];
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        if (subregistryField?.value) {
+          currentManagedDomain.subregistryAddress = subregistryField.value;
+        }
+      }
+    }
+
+    if (!currentManagedDomain.subregistryAddress) {
+      recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+      return;
+    }
+
+    // Get subregistry details to find records KeyValueStore
+    const subregistryDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(currentManagedDomain.subregistryAddress);
+    const subregistryState = subregistryDetails.details?.state?.fields || [];
+
+    // Find records KeyValueStore (for root domain)
+    const recordsField = subregistryState.find(f => f.field_name === 'records');
+    
+    if (!recordsField || !recordsField.value) {
+      recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+      return;
+    }
+
+    const kvStoreAddress = recordsField.value;
+
+    // Enumerate all contexts (keys) using pagination - same approach as subdomains
+    
+    let allContexts = [];
+    let cursor = undefined;
+    
+    do {
+      
+      // Use keyValueStoreKeys for enumeration (not keyValueStoreData!)
+      const response = await gatewayApi.state.innerClient.keyValueStoreKeys({
+        stateKeyValueStoreKeysRequest: {
+          key_value_store_address: kvStoreAddress,
+          cursor: cursor,
+          limit_per_page: 100
+        }
+      });
+      
+      
+      if (response.items && response.items.length > 0) {
+        allContexts.push(...response.items);
+      }
+      
+      cursor = response.next_cursor;
+    } while (cursor !== null && cursor !== undefined);
+    
+    
+    if (allContexts.length === 0) {
+      recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+      return;
+    }
+    
+    // Parse records from contexts and query each context's directive map
+    const parsedRecords = [];
+    
+    for (const item of allContexts) {
+      const contextName = item.key?.programmatic_json?.value || 
+                          item.key?.typed?.value ||
+                          item.key_json?.value ||
+                          'Unknown';
+      
+      if (contextName === 'Unknown') continue;
+      
+      
+      try {
+        // Query the specific key to get the HashMap value
+        const contextDataResponse = await gatewayApi.state.innerClient.keyValueStoreData({
+          stateKeyValueStoreDataRequest: {
+            key_value_store_address: kvStoreAddress,
+            keys: [{
+              key_json: {
+                kind: "String",
+                value: contextName
+              }
+            }]
+          }
+        });
+        
+        
+        if (contextDataResponse?.entries && contextDataResponse.entries.length > 0) {
+          const entry = contextDataResponse.entries[0];
+          
+          // The value is a HashMap<String, String> (directives -> values)
+          const directivesMap = entry.value?.programmatic_json?.entries || 
+                                entry.value?.typed?.entries ||
+                                entry.value?.entries ||
+                                [];
+          
+          
+          // Extract each directive/value pair
+          for (const mapEntry of directivesMap) {
+            const directive = mapEntry.key?.value || mapEntry.key;
+            const value = mapEntry.value?.value || mapEntry.value;
+            
+            if (directive && value) {
+              parsedRecords.push({ context: contextName, directive, value });
+            }
+          }
+        }
+      } catch (error) {
+        console.error(`❌ [Records] Error querying context "${contextName}":`, error);
+      }
+    }
+    
+    
+    if (parsedRecords.length === 0) {
+      recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+      return;
+    }
+    
+    // Display records with delete buttons
+    const recordsHtml = parsedRecords.map(record => {
+      const escapedContext = record.context.replace(/'/g, "\\'");
+      const escapedDirective = record.directive.replace(/'/g, "\\'");
+      
+      return `
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; padding: 12px; margin-bottom: 8px; background: white; border: 1px solid #e2e8f0; border-radius: 6px;">
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">${record.context} / ${record.directive}</div>
+            <div style="font-size: 0.85em; color: #64748b; word-break: break-all; font-family: monospace;">${record.value}</div>
+          </div>
+          <button 
+            onclick="deleteRecord('${escapedContext}', '${escapedDirective}')"
+            style="padding: 6px 12px; background: #ef4444; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 0.9em; margin-left: 12px; white-space: nowrap;"
+            onmouseover="this.style.background='#dc2626'"
+            onmouseout="this.style.background='#ef4444'">
+            Delete
+          </button>
+        </div>
+      `;
+    }).join('');
+    
+    recordsList.innerHTML = `
+      <div style="margin-bottom: 12px; padding: 8px 12px; background: rgba(34, 197, 94, 0.1); border-left: 3px solid #22c55e; border-radius: 4px;">
+        <strong>${parsedRecords.length}</strong> record${parsedRecords.length === 1 ? '' : 's'} found
+      </div>
+      ${recordsHtml}
+    `;
+  } catch (error) {
+    console.error("❌ [Records] Error loading records:", error);
+    console.error("   Error details:", error.message);
+    recordsList.innerHTML = '<p class="info-empty">No records yet</p>';
+  }
+}
+
+// Helper to get current epoch
+async function getCurrentEpoch() {
+  try {
+    const status = await gatewayApi.status.getCurrent();
+    return status.ledger_state.epoch;
+  } catch (error) {
+    console.error('Error getting current epoch:', error);
+    return 100000;
+  }
+}
+
+// Create subdomain
+async function createSubdomain() {
+  if (!currentManagedDomain) {
+    showError("Please open a domain modal first");
+    return;
+  }
+
+  const subdomainName = document.getElementById("newSubdomainName").value.trim();
+
+  if (!subdomainName) {
+    showError("Please enter a subdomain name");
+    return;
+  }
+
+  try {
+    showTransactionModal("Creating subdomain...");
+
+    // Get component details for domain resource
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+    const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+    
+    if (!domainManagerField) {
+      throw new Error("Could not find domain resource");
+    }
+
+    const domainResource = domainManagerField.value;
+
+    // Get subregistry address if not already loaded
+    let subregistryAddress = currentManagedDomain.subregistryAddress;
+    
+    if (!subregistryAddress) {
+      
+      // Query the domain NFT data to get subregistry address
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainResource,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+
+      if (response && response.non_fungible_ids && response.non_fungible_ids.length > 0) {
+        const nftData = response.non_fungible_ids[0];
+        const data = nftData.data;
+        const fields = data?.programmatic_json?.fields || [];
+        
+        // Find subregistry_component_address field
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        
+        if (subregistryField && subregistryField.value) {
+          subregistryAddress = subregistryField.value;
+        }
+      }
+      
+      if (!subregistryAddress) {
+        throw new Error("Could not find subregistry address in domain NFT metadata");
+      }
+
+      currentManagedDomain.subregistryAddress = subregistryAddress;
+    }
+
+    const manifest = getCreateSubdomainManifest({
+      subregistryAddress: subregistryAddress,
+      domainResource: domainManagerField.value,
+      domainId: currentManagedDomain.id,
+      subdomainName: subdomainName,
+      metadata: {},
+      accountAddress: account.address,
+      networkId: currentNetwork === 'mainnet' ? '1' : '2'
+    });
+
+    
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+
+    if (result.isErr()) {
+      console.error("❌ [Create Subdomain] Wallet returned error:", result.error);
+      throw new Error(JSON.stringify(result.error));
+    }
+
+    const receipt = await gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+
+    if (receipt.transaction.transaction_status === 'CommittedSuccess') {
+      hideTransactionModal();
+      showSuccess(`✅ Subdomain "${subdomainName}" created successfully!`);
+
+      // Clear form
+      document.getElementById("newSubdomainName").value = '';
+
+      // Reload subdomains
+      await loadDomainSubdomains();
+    } else {
+      throw new Error("Transaction failed: " + receipt.transaction.transaction_status);
+    }
+  } catch (error) {
+    hideTransactionModal();
+    console.error("❌ Create subdomain error:", error);
+    showError("Failed to create subdomain: " + (error.message || error.error || JSON.stringify(error)));
+  }
+}
+
+// Delete subdomain
+window.deleteSubdomain = async function deleteSubdomain(subdomainName) {
+  if (!currentManagedDomain) {
+    showError("Please open a domain modal first");
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to delete the subdomain "${subdomainName}.${currentManagedDomain.name}"?\n\nThis will also delete all records associated with this subdomain.`)) {
+    return;
+  }
+
+  try {
+    showTransactionModal("Deleting subdomain...");
+
+    // Get component details for domain resource
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+    const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+    
+    if (!domainManagerField) {
+      throw new Error("Could not find domain resource");
+    }
+
+    const domainResource = domainManagerField.value;
+
+    // Get subregistry address if not already loaded
+    let subregistryAddress = currentManagedDomain.subregistryAddress;
+    
+    if (!subregistryAddress) {
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainResource,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+      if (response?.non_fungible_ids?.[0]) {
+        const fields = response.non_fungible_ids[0].data?.programmatic_json?.fields || [];
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        if (subregistryField?.value) {
+          subregistryAddress = subregistryField.value;
+        }
+      }
+      
+      if (!subregistryAddress) {
+        throw new Error("Could not find subregistry address in domain NFT metadata");
+      }
+
+      currentManagedDomain.subregistryAddress = subregistryAddress;
+    }
+
+    const manifest = getDeleteSubdomainManifest({
+      subregistryAddress: subregistryAddress,
+      domainResource: domainManagerField.value,
+      domainId: currentManagedDomain.id,
+      subdomainName: subdomainName,
+      accountAddress: account.address,
+      networkId: currentNetwork === 'mainnet' ? '1' : '2'
+    });
+
+    
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+
+    if (result.isErr()) {
+      console.error("❌ [Delete Subdomain] Wallet returned error:", result.error);
+      throw new Error(JSON.stringify(result.error));
+    }
+
+    const receipt = await gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+
+    if (receipt.transaction.transaction_status === 'CommittedSuccess') {
+      hideTransactionModal();
+      showSuccess(`✅ Subdomain "${subdomainName}.${currentManagedDomain.name}" deleted successfully!`);
+
+      // Reload subdomains
+      await loadDomainSubdomains();
+    } else {
+      throw new Error("Transaction failed: " + receipt.transaction.transaction_status);
+    }
+  } catch (error) {
+    hideTransactionModal();
+    console.error("❌ Delete subdomain error:", error);
+    showError("Failed to delete subdomain: " + (error.message || error.error || JSON.stringify(error)));
+  }
+};
+
+// Create record
+async function createRecord() {
+  if (!currentManagedDomain) {
+    showError("Please open a domain modal first");
+    return;
+  }
+
+  const context = document.getElementById("recordContext").value.trim();
+  const directive = document.getElementById("recordDirective").value.trim();
+  const value = document.getElementById("recordValue").value.trim();
+
+  if (!context || !directive || !value) {
+    showError("Please fill in all record fields");
+    return;
+  }
+
+  try {
+    showTransactionModal("Creating record...");
+
+    // Get component details for domain resource
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+    const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+    
+    if (!domainManagerField) {
+      throw new Error("Could not find domain resource");
+    }
+
+    const domainResource = domainManagerField.value;
+
+    // Get subregistry address if not already loaded
+    let subregistryAddress = currentManagedDomain.subregistryAddress;
+    
+    if (!subregistryAddress) {
+      
+      // Query the domain NFT data to get subregistry address
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainResource,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+
+      if (response && response.non_fungible_ids && response.non_fungible_ids.length > 0) {
+        const nftData = response.non_fungible_ids[0];
+        const data = nftData.data;
+        const fields = data?.programmatic_json?.fields || [];
+        
+        // Find subregistry_component_address field
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        
+        if (subregistryField && subregistryField.value) {
+          subregistryAddress = subregistryField.value;
+        }
+      }
+      
+      if (!subregistryAddress) {
+        throw new Error("Could not find subregistry address in domain NFT metadata");
+      }
+
+      currentManagedDomain.subregistryAddress = subregistryAddress;
+    }
+
+    const manifest = getSetRecordManifest({
+      subregistryAddress: subregistryAddress,
+      domainResource: domainManagerField.value,
+      domainId: currentManagedDomain.id,
+      context: context,
+      directive: directive,
+      value: value,
+      accountAddress: account.address,
+      networkId: currentNetwork === 'mainnet' ? '1' : '2'
+    });
+
+    
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+
+    if (result.isErr()) {
+      console.error("❌ [Create Record] Wallet returned error:", result.error);
+      throw new Error(JSON.stringify(result.error));
+    }
+
+    const receipt = await gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+
+    if (receipt.transaction.transaction_status === 'CommittedSuccess') {
+      hideTransactionModal();
+      showSuccess(`✅ Record created successfully!`);
+
+      // Clear form
+      document.getElementById("recordContext").value = '';
+      document.getElementById("recordDirective").value = '';
+      document.getElementById("recordValue").value = '';
+
+      // Reload records
+      await loadDomainRecords();
+    } else {
+      throw new Error("Transaction failed: " + receipt.transaction.transaction_status);
+    }
+  } catch (error) {
+    hideTransactionModal();
+    console.error("❌ Create record error:", error);
+    showError("Failed to create record: " + (error.message || error.error || JSON.stringify(error)));
+  }
+}
+
+// Delete a record
+window.deleteRecord = async function deleteRecord(context, directive) {
+  if (!currentManagedDomain) {
+    showError("Please open a domain modal first");
+    return;
+  }
+
+  if (!confirm(`Are you sure you want to delete this record?\n\nContext: ${context}\nDirective: ${directive}\n\nThis action cannot be undone.`)) {
+    return;
+  }
+
+  try {
+    showTransactionModal("Deleting record...");
+
+    // Get component details for domain resource
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+    const domainManagerField = componentState.find(f => f.field_name === 'domain_manager');
+    
+    if (!domainManagerField) {
+      throw new Error("Could not find domain resource");
+    }
+
+    // Get subregistry address if not already loaded
+    let subregistryAddress = currentManagedDomain.subregistryAddress;
+    
+    if (!subregistryAddress) {
+      
+      const response = await gatewayApi.state.innerClient.nonFungibleData({
+        stateNonFungibleDataRequest: {
+          resource_address: domainManagerField.value,
+          non_fungible_ids: [currentManagedDomain.id]
+        }
+      });
+
+      if (response?.non_fungible_ids?.[0]) {
+        const fields = response.non_fungible_ids[0].data?.programmatic_json?.fields || [];
+        const subregistryField = fields.find(f => f.field_name === 'subregistry_component_address');
+        if (subregistryField?.value) {
+          subregistryAddress = subregistryField.value;
+        }
+      }
+      
+      if (!subregistryAddress) {
+        throw new Error("Could not find subregistry address in domain NFT metadata");
+      }
+
+      currentManagedDomain.subregistryAddress = subregistryAddress;
+    }
+
+    const manifest = getDeleteRecordManifest({
+      subregistryAddress: subregistryAddress,
+      domainResource: domainManagerField.value,
+      domainId: currentManagedDomain.id,
+      context: context,
+      directive: directive,
+      accountAddress: account.address,
+      networkId: currentNetwork === 'mainnet' ? '1' : '2'
+    });
+
+
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: manifest,
+      version: 1,
+    });
+
+    if (result.isErr()) {
+      console.error("❌ [Delete Record] Wallet returned error:", result.error);
+      throw new Error(JSON.stringify(result.error));
+    }
+
+    const receipt = await gatewayApi.transaction.getCommittedDetails(result.value.transactionIntentHash);
+
+    if (receipt.transaction.transaction_status === 'CommittedSuccess') {
+      hideTransactionModal();
+      showSuccess(`✅ Record deleted successfully!`);
+
+      // Reload records
+      await loadDomainRecords();
+    } else {
+      throw new Error("Transaction failed: " + receipt.transaction.transaction_status);
+    }
+  } catch (error) {
+    hideTransactionModal();
+    console.error("❌ Delete record error:", error);
+    showError("Failed to delete record: " + (error.message || error.error || JSON.stringify(error)));
+  }
+};
+
+// Update registrar select when badges are loaded
+function updateDomainRegistrarSelect() {
+  const select = document.getElementById("domainRegistrarSelect");
+  if (!select) return;
+
+  if (!window.userRegistrarBadges || window.userRegistrarBadges.length === 0) {
+    select.innerHTML = '<option value="">No registrar badges found</option>';
+    return;
+  }
+
+  select.innerHTML = window.userRegistrarBadges.map((badge, index) => {
+    const shortId = badge.id.length > 20 
+      ? `${badge.id.substring(0, 10)}...${badge.id.substring(badge.id.length - 6)}`
+      : badge.id;
+    return `<option value="${index}">Badge ${index + 1}: ${shortId}</option>`;
+  }).join('');
+}
+
 // ********** Event Listeners **********
 document.addEventListener("DOMContentLoaded", () => {
   
@@ -3798,7 +4857,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateResourceCreationVisibility();
   updateApplicationVisibility();
   updateAdminPanelVisibility();
-  updateManagementPanelVisibility();
   
   // Note: Tab navigation replaced by mode selection in step 1
   
@@ -3830,8 +4888,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         elements.adminContent?.classList.add('hidden');
         elements.adminContent?.classList.remove('active');
-        elements.manageContent?.classList.add('hidden');
-        elements.manageContent?.classList.remove('active');
         elements.toolsContent?.classList.add('hidden');
         elements.toolsContent?.classList.remove('active');
         
@@ -4087,9 +5143,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Back buttons
   
-  if (!elements.manageBackToMode) console.error("❌ manageBackToMode element not found");
-  else elements.manageBackToMode.onclick = backToModeSelection;
-  
   if (!elements.toolsBackToMode) console.error("❌ toolsBackToMode element not found");
   else elements.toolsBackToMode.onclick = backToModeSelection;
   
@@ -4116,6 +5169,42 @@ document.addEventListener("DOMContentLoaded", () => {
     copyToClipboard(address);
   };
   
+  // Tools panel - Domain Management
+  const registerNewDomainBtn = document.getElementById("registerNewDomain");
+  if (registerNewDomainBtn) registerNewDomainBtn.onclick = registerNewDomain;
+  
+  const refreshDomainsBtn = document.getElementById("refreshDomainsList");
+  if (refreshDomainsBtn) refreshDomainsBtn.onclick = () => detectUserDomains();
+  
+  const createSubdomainBtn = document.getElementById("createSubdomain");
+  if (createSubdomainBtn) createSubdomainBtn.onclick = createSubdomain;
+  
+  const createRecordBtn = document.getElementById("createRecord");
+  if (createRecordBtn) createRecordBtn.onclick = createRecord;
+  
+  // Domain modal - tab switching
+  const tabButtons = document.querySelectorAll('.tab-button');
+  tabButtons.forEach(button => {
+    button.addEventListener('click', () => {
+      switchDomainTab(button.dataset.tab);
+    });
+  });
+  
+  // Domain modal - close on click outside or close button
+  const domainModal = document.getElementById("domainModal");
+  if (domainModal) {
+    domainModal.addEventListener('click', (e) => {
+      if (e.target === domainModal) {
+        closeDomainModal();
+      }
+    });
+    
+    const domainModalClose = domainModal.querySelector('.modal-close');
+    if (domainModalClose) {
+      domainModalClose.addEventListener('click', closeDomainModal);
+    }
+  }
+  
   // Tools panel - Registrar Management
   if (!elements.requestRegistrarBadge) console.error("❌ requestRegistrarBadge element not found");
   else elements.requestRegistrarBadge.onclick = requestRegistrarBadge;
@@ -4134,11 +5223,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
-  // Management panel - with error checking
-  // Management panel elements
-  if (!elements.searchComponent) console.error("❌ searchComponent element not found");
-  else elements.searchComponent.onclick = searchComponentForManagement;
   
   // Copy buttons (using event delegation)
   document.addEventListener("click", (e) => {

@@ -104,17 +104,6 @@
               </ul>
             </div>
 
-            <div class="mode-card" data-mode="manage">
-              <div class="mode-icon">📊</div>
-              <h3>RNS Statistics</h3>
-              <p>View live RNS V2 component statistics and metrics</p>
-              <ul class="mode-features">
-                <li>Total domains issued</li>
-                <li>V1 migration tracking</li>
-                <li>Unique user count</li>
-              </ul>
-            </div>
-
             <div class="mode-card" data-mode="tools">
               <div class="mode-icon">🛠️</div>
               <h3>Developer Tools</h3>
@@ -443,7 +432,6 @@
               <label for="dappDefinitionIconUrl">dApp Icon URL:</label>
               <input id="dappDefinitionIconUrl" type="url" class="form-control"
                 placeholder="e.g. https://your-cdn.com/dapp-icon.png">
-              <small class="form-help">Icon for your dApp definition (usually the same as component icon)</small>
             </div>
           </div>
 
@@ -757,50 +745,6 @@
       </div> <!-- Close adminFlow -->
     </div>
 
-    <!-- Hidden Manage Content (will be shown in mode selection) -->
-    <div id="manageContent" class="content-section hidden">
-      <!-- Manage Wallet Connection Gate -->
-      <div id="manageWalletGate" class="wallet-gate">
-        <div class="gate-content">
-          <h2>📊 Connect Your Wallet to View RNS Statistics</h2>
-          <p>View live metrics and analytics for any RNS V2 component.</p>
-          <div class="gate-features">
-            <h3>Available Statistics:</h3>
-            <ul>
-              <li>✅ Total domains issued (V2)</li>
-              <li>✅ Domains migrated from V1</li>
-              <li>✅ Unique user count</li>
-              <li>✅ Component address lookup</li>
-            </ul>
-          </div>
-          <div class="connect-prompt">
-            <p class="connect-help">Use the connect button in the header above to view statistics</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Management Panel (Hidden until wallet connected) -->
-      <div id="managementPanel" class="management-panel hidden">
-        <div class="admin-nav">
-          <button id="manageBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
-        </div>
-        <h2>RNS Statistics Dashboard</h2>
-
-        <div class="component-search">
-          <div class="form-group">
-            <label for="searchComponentAddress">Component Address:</label>
-            <input id="searchComponentAddress" name="component-address" type="text" class="form-control" placeholder=""
-              autocomplete="component-address" spellcheck="false">
-            <button id="searchComponent" class="btn btn-primary">Load Component</button>
-          </div>
-        </div>
-
-        <div id="componentDetails" class="component-details hidden">
-          <div id="componentInfo" class="info-grid"></div>
-        </div>
-      </div>
-    </div>
-
     <!-- Hidden Tools Content (will be shown in mode selection) -->
     <div id="toolsContent" class="content-section hidden">
       <!-- Tools Wallet Connection Gate -->
@@ -944,6 +888,69 @@
           </div>
         </div>
 
+        <!-- Domain Management -->
+        <div class="tool-section collapsible-tool collapsed hidden">
+          <div class="tool-header" data-tool="domainManagement">
+            <h3>🌐 Domain Management</h3>
+            <span class="expand-icon">▼</span>
+          </div>
+          <p class="tool-description">Register domains and manage their subdomains and records.</p>
+
+          <div class="tool-content" id="domainManagementContent">
+
+            <!-- Register New Domain -->
+            <div class="form-section">
+              <h4>Register New Domain</h4>
+              <p class="form-help">Bond a new domain on the RNS service</p>
+
+              <div class="form-group">
+                <label for="newDomainName">Domain Name:</label>
+                <input id="newDomainName" type="text" class="form-control" placeholder="mydomain">
+                <small class="form-help">Domain name without TLD (e.g., "mydomain" for "mydomain.xrd")</small>
+              </div>
+
+              <div class="form-group">
+                <label for="domainBondAmount">Bond Amount:</label>
+                <input id="domainBondAmount" type="number" class="form-control" placeholder="100" step="1" min="0">
+                <small class="form-help">Amount of payment resource to bond (includes registrar fee)</small>
+              </div>
+
+              <div class="form-group">
+                <label for="domainPaymentResourceSelect">Payment Resource:</label>
+                <select id="domainPaymentResourceSelect" class="form-control">
+                  <option value="">Loading payment resources...</option>
+                </select>
+                <small class="form-help">Choose which payment resource to use for the bond</small>
+              </div>
+
+              <div class="form-group">
+                <label for="domainRegistrarSelect">Select Registrar:</label>
+                <select id="domainRegistrarSelect" class="form-control">
+                  <option value="">Loading registrar badges...</option>
+                </select>
+                <small class="form-help">Choose which registrar badge to use for registration</small>
+              </div>
+
+              <button id="registerNewDomain" class="btn btn-primary">Register Domain</button>
+            </div>
+
+            <!-- Manage Existing Domains -->
+            <div class="form-section" style="margin-top: 32px;">
+              <h4>Your Domains</h4>
+              <p class="form-help">Domains you own will be automatically detected</p>
+
+              <button id="refreshDomainsList" class="btn btn-secondary" style="margin-bottom: 16px;">
+                🔄 Refresh Domains List
+              </button>
+
+              <div id="domainsList" class="hidden" style="margin-top: 20px;">
+                <div id="domainsContent" class="info-card"></div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Registrar Management -->
         <div class="tool-section collapsible-tool collapsed hidden">
           <div class="tool-header" data-tool="registrarManagement">
@@ -1005,6 +1012,95 @@
     </div>
   </main>
 
+  <!-- Domain Management Modal -->
+  <div id="domainModal" class="modal hidden">
+    <div class="modal-content" style="max-width: 800px;">
+      <div class="modal-header">
+        <h3 id="domainModalTitle">Manage Domain</h3>
+        <button class="modal-close">×</button>
+      </div>
+      <div class="modal-body" style="padding: 32px;">
+        
+        <!-- Domain Info Display -->
+        <div id="domainInfoDisplay" class="form-section" style="margin-bottom: 32px;">
+          <h4 style="margin-bottom: 16px; font-size: 1.1em;">Domain Information</h4>
+          <div id="domainInfoContent" class="info-card" style="padding: 0;"></div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation" style="display: flex; gap: 16px; border-bottom: 2px solid #e2e8f0; margin-bottom: 24px;">
+          <button class="tab-button active" data-tab="subdomains" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-weight: 500; border-bottom: 2px solid #3b82f6; margin-bottom: -2px; color: #3b82f6;">
+            Subdomains
+          </button>
+          <button class="tab-button" data-tab="records" style="padding: 12px 24px; border: none; background: none; cursor: pointer; font-weight: 500; color: #64748b;">
+            Records
+          </button>
+        </div>
+
+        <!-- Subdomains Tab -->
+        <div id="subdomainsTab" class="tab-content">
+          <!-- Create Subdomain -->
+          <div class="form-section" style="margin-bottom: 32px;">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Subdomain</h4>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="newSubdomainName">Subdomain Name:</label>
+              <input id="newSubdomainName" type="text" class="form-control" placeholder="sub">
+              <small class="form-help">Enter subdomain name (e.g., "sub" for "sub.yourdomain.xrd")</small>
+            </div>
+
+            <button id="createSubdomain" class="btn btn-primary">Create Subdomain</button>
+          </div>
+
+          <!-- Existing Subdomains -->
+          <div class="form-section">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Subdomains</h4>
+            <div id="subdomainsList" class="info-card">
+              <p class="info-empty">Loading subdomains...</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Records Tab -->
+        <div id="recordsTab" class="tab-content" style="display: none;">
+          <!-- Create Record -->
+          <div class="form-section" style="margin-bottom: 32px;">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Create Record</h4>
+            
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="recordContext">Context:</label>
+              <input id="recordContext" type="text" class="form-control" placeholder="receivers">
+              <small class="form-help">Record context (e.g., "receivers", "social", "metadata")</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 16px;">
+              <label for="recordDirective">Directive:</label>
+              <input id="recordDirective" type="text" class="form-control" placeholder="*">
+              <small class="form-help">Record directive (e.g., "*", "twitter", "github")</small>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+              <label for="recordValue">Value:</label>
+              <input id="recordValue" type="text" class="form-control" placeholder="account_tdx_...">
+              <small class="form-help">Record value (address, URL, or text)</small>
+            </div>
+
+            <button id="createRecord" class="btn btn-primary">Create Record</button>
+          </div>
+
+          <!-- Existing Records -->
+          <div class="form-section">
+            <h4 style="margin-bottom: 16px; font-size: 1.1em;">Existing Records</h4>
+            <div id="recordsList" class="info-card">
+              <p class="info-empty">Loading records...</p>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
   <!-- Registrar Management Modal -->
   <div id="registrarModal" class="modal hidden">
     <div class="modal-content" style="max-width: 700px;">
@@ -1051,13 +1147,6 @@
         <!-- Withdraw Fees -->
         <div id="withdrawFeesSection" class="form-section" style="margin-bottom: 32px; padding-top: 32px;">
           <h4 style="margin-bottom: 16px; font-size: 1.1em;">Withdraw Accumulated Fees</h4>
-          <div class="info-message"
-            style="margin-bottom: 16px; padding: 12px; background: rgba(52, 152, 219, 0.1); border-left: 3px solid #3498db; border-radius: 4px;">
-            <p style="margin: 0; font-size: 0.9em;">
-              <strong>Withdrawal Requirement:</strong> You must have issued at least 100 domains via your registrar
-              badge before fees can be withdrawn.
-            </p>
-          </div>
           <div id="accumulatedFeesContent" class="info-card">
             <p class="info-empty">Loading fee information...</p>
           </div>
