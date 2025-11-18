@@ -104,17 +104,6 @@
               </ul>
             </div>
 
-            <div class="mode-card" data-mode="manage">
-              <div class="mode-icon">📊</div>
-              <h3>RNS Statistics</h3>
-              <p>View live RNS V2 component statistics and metrics</p>
-              <ul class="mode-features">
-                <li>Total domains issued</li>
-                <li>V1 migration tracking</li>
-                <li>Unique user count</li>
-              </ul>
-            </div>
-
             <div class="mode-card" data-mode="tools">
               <div class="mode-icon">🛠️</div>
               <h3>Developer Tools</h3>
@@ -754,50 +743,6 @@
         </div>
 
       </div> <!-- Close adminFlow -->
-    </div>
-
-    <!-- Hidden Manage Content (will be shown in mode selection) -->
-    <div id="manageContent" class="content-section hidden">
-      <!-- Manage Wallet Connection Gate -->
-      <div id="manageWalletGate" class="wallet-gate">
-        <div class="gate-content">
-          <h2>📊 Connect Your Wallet to View RNS Statistics</h2>
-          <p>View live metrics and analytics for any RNS V2 component.</p>
-          <div class="gate-features">
-            <h3>Available Statistics:</h3>
-            <ul>
-              <li>✅ Total domains issued (V2)</li>
-              <li>✅ Domains migrated from V1</li>
-              <li>✅ Unique user count</li>
-              <li>✅ Component address lookup</li>
-            </ul>
-          </div>
-          <div class="connect-prompt">
-            <p class="connect-help">Use the connect button in the header above to view statistics</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Management Panel (Hidden until wallet connected) -->
-      <div id="managementPanel" class="management-panel hidden">
-        <div class="admin-nav">
-          <button id="manageBackToMode" class="btn btn-secondary">← Back to Mode Selection</button>
-        </div>
-        <h2>RNS Statistics Dashboard</h2>
-
-        <div class="component-search">
-          <div class="form-group">
-            <label for="searchComponentAddress">Component Address:</label>
-            <input id="searchComponentAddress" name="component-address" type="text" class="form-control" placeholder=""
-              autocomplete="component-address" spellcheck="false">
-            <button id="searchComponent" class="btn btn-primary">Load Component</button>
-          </div>
-        </div>
-
-        <div id="componentDetails" class="component-details hidden">
-          <div id="componentInfo" class="info-grid"></div>
-        </div>
-      </div>
     </div>
 
     <!-- Hidden Tools Content (will be shown in mode selection) -->

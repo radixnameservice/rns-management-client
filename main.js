@@ -109,7 +109,6 @@ function initializeRadixIntegration() {
     updateResourceCreationVisibility();
     updateApplicationVisibility();
     updateAdminPanelVisibility();
-    updateManagementPanelVisibility();
     
     // Auto-detect registrar badges if tools component is loaded
     if (loadedToolsComponentAddress) {
@@ -140,7 +139,6 @@ function initializeUIElements() {
     // Tab contents
     deployContent: document.getElementById("deployContent"),
     adminContent: document.getElementById("adminContent"),
-    manageContent: document.getElementById("manageContent"),
     toolsContent: document.getElementById("toolsContent"),
     
     // Wallet gates and panels
@@ -148,8 +146,6 @@ function initializeUIElements() {
     deploymentWizard: document.getElementById("deploymentWizard"),
     adminWalletGate: document.getElementById("adminWalletGate"),
     adminFlow: document.getElementById("adminFlow"),
-    manageWalletGate: document.getElementById("manageWalletGate"),
-    managementPanel: document.getElementById("managementPanel"),
     toolsWalletGate: document.getElementById("toolsWalletGate"),
     toolsPanel: document.getElementById("toolsPanel"),
     
@@ -247,14 +243,7 @@ function initializeUIElements() {
     burnCompletionMessage: document.getElementById("burnCompletionMessage"),
     
     // Back buttons (admin now uses wizard navigation)
-    manageBackToMode: document.getElementById("manageBackToMode"),
     toolsBackToMode: document.getElementById("toolsBackToMode"),
-    
-    // Management panel elements
-    searchComponentAddress: document.getElementById("searchComponentAddress"),
-    searchComponent: document.getElementById("searchComponent"),
-    componentDetails: document.getElementById("componentDetails"),
-    componentInfo: document.getElementById("componentInfo"),
     
     // Tools panel elements - Global
     toolsComponentAddress: document.getElementById("toolsComponentAddress"),
@@ -358,9 +347,6 @@ function initializeNetworkDefaults() {
   // Component addresses (Admin and Management panels)
   if (elements.adminComponentAddress) {
     elements.adminComponentAddress.placeholder = defaults.placeholders.componentAddress;
-  }
-  if (elements.searchComponentAddress) {
-    elements.searchComponentAddress.placeholder = defaults.placeholders.componentAddress;
   }
   
   // Reserved domains textarea
@@ -770,7 +756,6 @@ function updateNetworkConfiguration() {
   updateResourceCreationVisibility();
   updateApplicationVisibility();
   updateAdminPanelVisibility();
-  updateManagementPanelVisibility();
   initializeNetworkDefaults();
 }
 
@@ -1384,192 +1369,6 @@ function backToModeFromAdmin() {
       el.classList.remove("completed");
     }
   });
-}
-
-// ********** Management Functions **********
-async function searchComponentForManagement() {
-  const componentAddress = elements.searchComponentAddress.value.trim();
-  
-  if (!componentAddress) {
-    showError("Please enter a component address");
-    return;
-  }
-  
-  if (!account) {
-    showError("Please connect your wallet first");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Loading component details...");
-    
-    // Query component details from Gateway API
-    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(componentAddress);
-    
-    if (componentDetails && componentDetails.details) {
-      await displayComponentInformation(componentAddress, componentDetails);
-      elements.componentDetails.classList.remove("hidden");
-      hideTransactionModal();
-    } else {
-      throw new Error("Component not found or invalid address");
-    }
-  } catch (error) {
-    console.error("Error searching component:", error);
-    hideTransactionModal();
-    showError("Failed to load component: " + error.message);
-  }
-}
-
-async function displayComponentInformation(componentAddress, componentDetails) {
-  // Show loading state
-  elements.componentInfo.innerHTML = `
-    <div class="info-card">
-      <p class="info-empty">Loading RNS statistics...</p>
-    </div>
-  `;
-  
-  try {
-    // Find the domain NFT resource from component state
-    const componentState = componentDetails.details?.state?.fields || [];
-    const domainResourceField = componentState.find(field => field.field_name === 'domain_nft_manager');
-    const domainResourceAddress = domainResourceField?.value || null;
-    
-    // Find the migrated domains KVStore
-    const migratedDomainsField = componentState.find(field => field.field_name === 'migrated_domains');
-    const migratedDomainsKvStore = migratedDomainsField?.value || null;
-    
-    let totalDomains = 0;
-    let migratedDomains = 0;
-    let uniqueUsers = 0;
-    
-    // Get total domains from the domain NFT resource
-    if (domainResourceAddress) {
-      try {
-        const resourceDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(domainResourceAddress);
-        totalDomains = parseInt(resourceDetails.details?.total_supply || "0");
-      } catch (e) {
-        console.error("Error fetching domain resource:", e);
-      }
-    }
-    
-    // Get migrated domains count from KVStore
-    if (migratedDomainsKvStore) {
-      try {
-        const keysResponse = await gatewayApi.state.innerClient.keyValueStoreKeys({
-          stateKeyValueStoreKeysRequest: {
-            key_value_store_address: migratedDomainsKvStore,
-            cursor: null,
-            limit_per_page: 1
-          }
-        });
-        migratedDomains = keysResponse.total_count || 0;
-      } catch (e) {
-        console.error("Error fetching migrated domains:", e);
-      }
-    }
-    
-    // Get unique users by querying domain holders
-    if (domainResourceAddress) {
-      try {
-        // Query all NFT holders for this resource
-        const holdersResponse = await gatewayApi.state.innerClient.nonFungibleIds({
-          stateNonFungibleIdsRequest: {
-            resource_address: domainResourceAddress,
-            cursor: null,
-            limit_per_page: 100
-          }
-        });
-        
-        // Count unique holders
-        const holders = new Set();
-        if (holdersResponse.items) {
-          for (const item of holdersResponse.items) {
-            if (item.owner_entity_address) {
-              holders.add(item.owner_entity_address);
-            }
-          }
-        }
-        uniqueUsers = holders.size;
-      } catch (e) {
-        console.error("Error fetching unique users:", e);
-        // If we can't get detailed holder info, estimate based on total supply
-        uniqueUsers = Math.min(totalDomains, Math.ceil(totalDomains * 0.8));
-      }
-    }
-    
-    // Build statistics display
-    const statsHTML = `
-    <div class="info-card">
-        <h4>RNS V2 Statistics</h4>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">${totalDomains.toLocaleString()}</div>
-            <div class="stat-label">Domains Issued</div>
-      </div>
-          <div class="stat-item">
-            <div class="stat-value">${migratedDomains.toLocaleString()}</div>
-            <div class="stat-label">Domains Migrated</div>
-      </div>
-          <div class="stat-item">
-            <div class="stat-value">${uniqueUsers.toLocaleString()}</div>
-            <div class="stat-label">Unique Users</div>
-      </div>
-    </div>
-    </div>
-    
-    `;
-    
-    elements.componentInfo.innerHTML = statsHTML;
-  } catch (error) {
-    console.error("Error loading RNS statistics:", error);
-    elements.componentInfo.innerHTML = `
-    <div class="info-card">
-        <p class="info-error">Failed to load RNS statistics. Please try again.</p>
-    </div>
-  `;
-  }
-}
-
-async function loadComponentTransactions(componentAddress) {
-  try {
-    // Query recent transactions involving this component
-    const transactionHistory = await gatewayApi.stream.innerClient.streamTransactions({
-      stateStreamTransactionsRequest: {
-        affected_global_entities_filter: [componentAddress],
-        limit_per_page: 10,
-        order: 'desc'
-      }
-    });
-    
-    if (transactionHistory && transactionHistory.items && transactionHistory.items.length > 0) {
-      const transactionsHTML = transactionHistory.items.map(tx => {
-        const txHash = tx.intent_hash || tx.state_version || 'Unknown';
-        const status = tx.transaction_status || 'Unknown';
-        const timestamp = tx.confirmed_at ? new Date(tx.confirmed_at).toLocaleString() : 'N/A';
-        
-        return `
-        <div class="transaction-item">
-          <div class="tx-header">
-            <span class="tx-id">${txHash.substring(0, 20)}...${txHash.substring(txHash.length - 10)}</span>
-            <span class="tx-status status-${status.toLowerCase()}">${status}</span>
-          </div>
-          <div class="tx-details">
-            <span class="tx-time">${timestamp}</span>
-            <a href="https://${currentNetwork === 'mainnet' ? 'dashboard' : 'stokenet-dashboard'}.radixdlt.com/transaction/${tx.intent_hash}" 
-               target="_blank" class="tx-link">View →</a>
-          </div>
-        </div>
-      `;
-      }).join('');
-      
-      elements.recentTransactions.innerHTML = transactionsHTML;
-    } else {
-      elements.recentTransactions.innerHTML = '<p class="info-empty">No recent transactions found</p>';
-    }
-  } catch (error) {
-    console.error("Error loading transactions:", error);
-    elements.recentTransactions.innerHTML = '<p class="info-error">Failed to load transaction history. This component may not have any transactions yet.</p>';
-  }
 }
 
 // ********** Reserved Domains Management **********
@@ -2607,8 +2406,6 @@ function switchToMode(mode) {
   elements.applicationFlow?.classList.add("hidden");
   elements.adminContent?.classList.add("hidden");
   elements.adminContent?.classList.remove("active");
-  elements.manageContent?.classList.add("hidden");
-  elements.manageContent?.classList.remove("active");
   elements.toolsContent?.classList.add("hidden");
   elements.toolsContent?.classList.remove("active");
   elements.progressTracker?.classList.add('hidden');
@@ -2637,14 +2434,6 @@ function switchToMode(mode) {
     } else {
       console.error("❌ adminContent element not found!");
     }
-  } else if (mode === 'manage') {
-    if (elements.manageContent) {
-      elements.manageContent.classList.remove("hidden");
-      elements.manageContent.classList.add("active");
-      updateManagementPanelVisibility(); // Update visibility based on wallet connection
-    } else {
-      console.error("❌ manageContent element not found!");
-    }
   } else if (mode === 'tools') {
     if (elements.toolsContent) {
       elements.toolsContent.classList.remove("hidden");
@@ -2662,8 +2451,6 @@ function backToModeSelection() {
   elements.adminContent?.classList.remove("active");
   elements.toolsContent?.classList.add("hidden");
   elements.toolsContent?.classList.remove("active");
-  elements.manageContent?.classList.add("hidden");
-  elements.manageContent?.classList.remove("active");
   
   // Reset component config internal elements to default state
   if (elements.adminWalletGate) {
@@ -2788,7 +2575,6 @@ function updateApplicationVisibility() {
       elements.walletConnectionGate.classList.remove("hidden");
       elements.applicationFlow.classList.add("hidden");
       elements.adminContent?.classList.add("hidden");
-      elements.manageContent?.classList.add("hidden");
     }
   }
 }
@@ -2808,25 +2594,6 @@ function updateAdminPanelVisibility() {
       // No wallet - show gate, hide admin flow
       elements.adminWalletGate.classList.remove("hidden");
       elements.adminFlow.classList.add("hidden");
-    }
-  }
-}
-
-function updateManagementPanelVisibility() {
-  // Only update if we're actually in manage mode
-  if (selectedMode !== 'manage') {
-    return;
-  }
-  
-  if (elements.manageWalletGate && elements.managementPanel) {
-    if (account) {
-      // Wallet connected - show management panel, hide gate
-      elements.manageWalletGate.classList.add("hidden");
-      elements.managementPanel.classList.remove("hidden");
-    } else {
-      // No wallet - show gate, hide management panel
-      elements.manageWalletGate.classList.remove("hidden");
-      elements.managementPanel.classList.add("hidden");
     }
   }
 }
@@ -5090,7 +4857,6 @@ document.addEventListener("DOMContentLoaded", () => {
   updateResourceCreationVisibility();
   updateApplicationVisibility();
   updateAdminPanelVisibility();
-  updateManagementPanelVisibility();
   
   // Note: Tab navigation replaced by mode selection in step 1
   
@@ -5122,8 +4888,6 @@ document.addEventListener("DOMContentLoaded", () => {
         
         elements.adminContent?.classList.add('hidden');
         elements.adminContent?.classList.remove('active');
-        elements.manageContent?.classList.add('hidden');
-        elements.manageContent?.classList.remove('active');
         elements.toolsContent?.classList.add('hidden');
         elements.toolsContent?.classList.remove('active');
         
@@ -5379,9 +5143,6 @@ document.addEventListener("DOMContentLoaded", () => {
   
   // Back buttons
   
-  if (!elements.manageBackToMode) console.error("❌ manageBackToMode element not found");
-  else elements.manageBackToMode.onclick = backToModeSelection;
-  
   if (!elements.toolsBackToMode) console.error("❌ toolsBackToMode element not found");
   else elements.toolsBackToMode.onclick = backToModeSelection;
   
@@ -5462,11 +5223,6 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
-  
-  // Management panel - with error checking
-  // Management panel elements
-  if (!elements.searchComponent) console.error("❌ searchComponent element not found");
-  else elements.searchComponent.onclick = searchComponentForManagement;
   
   // Copy buttons (using event delegation)
   document.addEventListener("click", (e) => {
