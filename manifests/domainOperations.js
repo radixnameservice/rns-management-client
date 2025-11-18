@@ -313,21 +313,19 @@ CALL_METHOD
 }
 
 /**
- * Creates a manifest to delete a record
- * @param {string} subregistryAddress - Domain's subregistry component address
+ * Creates a manifest to delete a record from a domain
+ * @param {string} subregistryAddress - Subregistry component address
  * @param {string} domainResource - Domain NFT resource address
  * @param {string} domainId - Domain NFT ID (in format [hex] for Bytes type)
- * @param {string|null} subdomainName - Subdomain name (null for root domain)
- * @param {string} context - Record context (e.g., "receivers", "social")
- * @param {string} directive - Record directive (e.g., "*", "twitter")
- * @param {string} accountAddress - Domain owner's account address
- * @param {string} networkId - Network ID
+ * @param {string} context - Record context (e.g., "radix", "social")
+ * @param {string} directive - Record directive (e.g., "address", "twitter")
+ * @param {string} accountAddress - User's account address
+ * @param {string} networkId - Network ID (1 for mainnet, 2 for stokenet)
  */
 export function getDeleteRecordManifest({ 
   subregistryAddress, 
   domainResource, 
   domainId, 
-  subdomainName, 
   context, 
   directive, 
   accountAddress, 
@@ -335,8 +333,6 @@ export function getDeleteRecordManifest({
 }) {
   // Domain ID is already in [hex] format, use as-is for RTM
   const formattedDomainId = domainId;
-
-  const subdomainOption = subdomainName ? `Some("${subdomainName}")` : 'None';
 
   return `
 # Create proof of domain NFT
@@ -358,7 +354,6 @@ CALL_METHOD
   Address("${subregistryAddress}")
   "delete_record"
   Proof("domain_proof")
-  ${subdomainOption}
   "${context}"
   "${directive}"
 ;
