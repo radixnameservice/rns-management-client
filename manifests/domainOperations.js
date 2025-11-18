@@ -10,7 +10,10 @@
  * @param {string} registrarId - Registrar badge NFT ID (in format [hex] for Bytes type)
  * @param {string} domainName - Domain name (including TLD, e.g. "example.xrd")
  * @param {string} paymentResource - Payment resource address (whitelisted stablecoin)
- * @param {string} bondAmount - Bond amount
+ * @param {string} bondAmount - Bond amount (as string)
+ * @param {number} basePrice - Base price from pricing tier (what registrar fee is calculated on)
+ * @param {string} registrarName - Registrar name for display in transaction message
+ * @param {number} registrarFeePercentage - Registrar fee percentage (e.g., 5 for 5%)
  * @param {string} accountAddress - User's account address
  * @param {string} networkId - Network ID (1 for mainnet, 2 for stokenet)
  */
@@ -20,13 +23,21 @@ export function getRegisterAndBondDomainManifest({
   registrarId, 
   domainName, 
   paymentResource,
-  bondAmount, 
+  bondAmount,
+  basePrice,
+  registrarName,
+  registrarFeePercentage,
   accountAddress, 
   networkId 
 }) {
+  // Calculate registrar fee based on base price (from pricing tier), not bond amount
+  const bondAmountNum = parseFloat(bondAmount);
+  const registrarFee = basePrice * (registrarFeePercentage / 100);
+  const totalAmount = bondAmountNum + registrarFee;
 
   return `
-# Withdraw payment resource for domain bond
+
+# Withdraw base price (domain bond)
 CALL_METHOD
     Address("${accountAddress}")
     "withdraw"
@@ -34,23 +45,31 @@ CALL_METHOD
     Decimal("${bondAmount}")
 ;
 
-TAKE_FROM_WORKTOP
+# Withdraw registrar fee (${registrarFeePercentage}% of base price)
+CALL_METHOD
+    Address("${accountAddress}")
+    "withdraw"
     Address("${paymentResource}")
-    Decimal("${bondAmount}")
-    Bucket("payment_resource")
+    Decimal("${registrarFee.toFixed(6)}")
 ;
 
-# Register and bond domain
+# Take combined payment from worktop (bond + fee)
+TAKE_ALL_FROM_WORKTOP
+    Address("${paymentResource}")
+    Bucket("total_payment")
+;
+
+# Register and bond domain (includes base price + registrar fee)
 CALL_METHOD
     Address("${componentAddress}")
     "register_and_bond_domain"
     "${domainName}"
-    Bucket("payment_resource")
+    Bucket("total_payment")
     Address("${accountAddress}")
     NonFungibleLocalId("${registrarId}")
 ;
 
-# Deposit domain NFT to account
+# Deposit domain NFT and any change to account
 CALL_METHOD
     Address("${accountAddress}")
     "deposit_batch"

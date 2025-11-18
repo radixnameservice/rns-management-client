@@ -2951,7 +2951,8 @@ async function loadToolsComponent() {
     // Auto-load registrar badges (non-silent to show any errors)
     await detectRegistrarBadges(false);
     
-    // Auto-load accepted payment resources
+    // Auto-load price ladder and accepted payment resources
+    await loadPriceLadder();
     await loadAcceptedPaymentResources();
     
     // Auto-load user domains
@@ -3322,8 +3323,8 @@ async function queryRegistrarInfo(registrarId, registrarResource) {
     
     // Extract registrar info from NFT data
     // RegistrarInfo struct: { name: String, icon_url: String, website_url: String, fee_percentage: Decimal }
-    if (nftResponse && nftResponse.length > 0) {
-      const nftData = nftResponse[0];
+    if (nftResponse?.non_fungible_ids && nftResponse.non_fungible_ids.length > 0) {
+      const nftData = nftResponse.non_fungible_ids[0];
       const data = nftData.data;
       
       // Parse the structured data
@@ -3892,6 +3893,50 @@ async function burnRegistrarBadge() {
 let userDomains = [];
 let currentManagedDomain = null;
 let acceptedPaymentResources = [];
+let priceLadder = {};
+
+// Load price ladder from component
+async function loadPriceLadder() {
+  if (!loadedToolsComponentAddress) {
+    return;
+  }
+
+  try {
+    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(loadedToolsComponentAddress);
+    const componentState = componentDetails.details?.state?.fields || [];
+
+    // Find the price_ladder field
+    const priceLadderField = componentState.find(f => f.field_name === 'price_ladder');
+    
+    if (priceLadderField && priceLadderField.entries) {
+      priceLadder = {};
+      for (const entry of priceLadderField.entries) {
+        const length = parseInt(entry.key?.value || entry.key);
+        const price = parseFloat(entry.value?.value || entry.value);
+        priceLadder[length] = price;
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error loading price ladder:", error);
+    // Set default fallback
+    priceLadder = {
+      1: 2250,
+      2: 240,
+      3: 120,
+      4: 40
+    };
+  }
+}
+
+// Calculate domain base price from pricing tier
+function calculateDomainPrice(domainName) {
+  // Extract SLD (second-level domain) part - everything before first dot
+  const sld = domainName.split('.')[0];
+  const length = sld.length;
+  
+  // Look up price in price ladder, default to 4 for 5+ characters
+  return priceLadder[length] || 4;
+}
 
 // Load accepted payment resources
 async function loadAcceptedPaymentResources() {
@@ -4020,6 +4065,9 @@ async function registerNewDomain() {
     // Add .xrd TLD if not present
     const fullDomainName = domainName.includes('.') ? domainName : `${domainName}.xrd`;
 
+    // Calculate base price from pricing tier (what registrar fee is based on)
+    const basePrice = calculateDomainPrice(fullDomainName);
+
     const manifest = getRegisterAndBondDomainManifest({
       componentAddress: loadedToolsComponentAddress,
       registrarResource: selectedRegistrar.resource,
@@ -4027,6 +4075,9 @@ async function registerNewDomain() {
       domainName: fullDomainName,
       paymentResource: paymentResource,
       bondAmount: bondAmount,
+      basePrice: basePrice,
+      registrarName: selectedRegistrar.name,
+      registrarFeePercentage: selectedRegistrar.feePercentage,
       accountAddress: account.address,
       networkId: currentNetwork === 'mainnet' ? '1' : '2'
     });
