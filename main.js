@@ -356,16 +356,16 @@ function initializeNetworkDefaults() {
   
   // Set default icon URLs if empty
   if (!elements.domainIconUrl?.value) {
-    elements.domainIconUrl.value = "https://arweave.net/fcOBxUL8R_cWXOCIn-la3KUDyn-JHNCOsWNxxfHH-zs";
+    elements.domainIconUrl.value = "https://arweave.net/9w3nVsiO5dX5hvubeYl9EVE0dobKuu27UJIbJd98N_c";
   }
   if (!elements.adminBadgeIconUrl?.value) {
-    elements.adminBadgeIconUrl.value = "https://arweave.net/sXgaBzCc5uqm96x_NjleSevlTp_xKY6Is4HgKNai1l8";
+    elements.adminBadgeIconUrl.value = "https://arweave.net/hNDWpk5JBaQQYGWn3duwyewlpm3IuV1DKluG1hqxZl0";
   }
   if (!elements.configBadgeIconUrl?.value) {
-    elements.configBadgeIconUrl.value = "https://arweave.net/gPAnpfbcKCFROb0ar0bm4AAtQzyYVfOuwVESv0A909Y";
+    elements.configBadgeIconUrl.value = "https://arweave.net/zIbymddidStTtnmStOgGGNeJ1rGDHIietIFwjAwlUWo";
   }
   if (!elements.registrarBadgeIconUrl?.value) {
-    elements.registrarBadgeIconUrl.value = "https://arweave.net/Vvq02ftM5FqYIaiJ4_qrAmNR9VLnCnXC342Qa4Sha_s";
+    elements.registrarBadgeIconUrl.value = "https://arweave.net/hmllqssoBCGdVxV8RIAEbjg3o97GjN4dOE_837ltTMk";
   }
   
   // Set default component metadata if empty
@@ -382,7 +382,7 @@ function initializeNetworkDefaults() {
     elements.componentInfoUrl.value = "";
   }
   if (!elements.componentIconUrl?.value) {
-    elements.componentIconUrl.value = "https://arweave.net/QNZ7YnO6fHO8FNhnnmVwS2qFqahNX8ezhszVYjQODH8";
+    elements.componentIconUrl.value = "https://arweave.net/8-TlLB_TstndlYzuwNO1ScDTju_3zZJUJYSj93BgjTE";
   }
   if (!elements.subregistryName?.value) {
     elements.subregistryName.value = "";
@@ -394,12 +394,12 @@ function initializeNetworkDefaults() {
     elements.subregistryTags.value = "";
   }
   if (!elements.subregistryIconUrl?.value) {
-    elements.subregistryIconUrl.value = "https://arweave.net/aKWpBNgKiREXg88Szx81mufNoCuXuUKbilj0eLR9tEQ";
+    elements.subregistryIconUrl.value = "https://arweave.net/BgQXDRVF3xP9w9hA0jbsl_FN8yv3mV4Nsrm7lAP1HQQ";
   }
   
   // Set dApp definition icon default (same as component icon by default)
   if (!elements.dappDefinitionIconUrl?.value) {
-    elements.dappDefinitionIconUrl.value = "https://arweave.net/dUTIV2Py3Y5WsP448aVxK7i6LqSZPlKZd805clIJTh0";
+    elements.dappDefinitionIconUrl.value = "https://arweave.net/ByvqoRIXUnI8-gvfzi8kpFpasp8wuawK2FwaKhB0g3A";
   }
   
   // Network defaults initialized
@@ -653,11 +653,11 @@ function validateStep3() {
   const componentDescription = elements.componentDescription.value.trim() || "";
   const componentTagsText = elements.componentTags.value.trim() || "";
   const componentInfoUrl = elements.componentInfoUrl.value.trim() || "";
-  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/QNZ7YnO6fHO8FNhnnmVwS2qFqahNX8ezhszVYjQODH8";
+  const componentIconUrl = elements.componentIconUrl.value.trim() || "https://arweave.net/8-TlLB_TstndlYzuwNO1ScDTju_3zZJUJYSj93BgjTE";
   const subregistryName = elements.subregistryName.value.trim() || "";
   const subregistryDescription = elements.subregistryDescription.value.trim() || "";
   const subregistryTagsText = elements.subregistryTags.value.trim() || "";
-  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/aKWpBNgKiREXg88Szx81mufNoCuXuUKbilj0eLR9tEQ";
+  const subregistryIconUrl = elements.subregistryIconUrl.value.trim() || "https://arweave.net/BgQXDRVF3xP9w9hA0jbsl_FN8yv3mV4Nsrm7lAP1HQQ";
   
   // Parse tags into arrays
   const componentTags = componentTagsText.split(',').map(t => t.trim()).filter(t => t);
