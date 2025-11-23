@@ -30,14 +30,23 @@ export function getRegisterAndBondDomainManifest({
   accountAddress, 
   networkId 
 }) {
-  // Calculate registrar fee based on base price (from pricing tier), not bond amount
+  // Bond amount equals base price (from pricing tier based on domain length)
+  // Registrar fee is calculated as percentage of base price
   const bondAmountNum = parseFloat(bondAmount);
   const registrarFee = basePrice * (registrarFeePercentage / 100);
   const totalAmount = bondAmountNum + registrarFee;
 
   return `
+# ====================================================================
+# Domain Registration: ${domainName}
+# Registrar: ${registrarName}
+# ====================================================================
+# Bond Amount (from pricing tier): ${bondAmount}
+# Registrar Fee (${registrarFeePercentage}% of base): ${registrarFee.toFixed(2)}
+# Total Payment: ${totalAmount.toFixed(2)}
+# ====================================================================
 
-# Withdraw base price (domain bond)
+# Withdraw bond amount (base price from pricing tier)
 CALL_METHOD
     Address("${accountAddress}")
     "withdraw"

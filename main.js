@@ -3799,18 +3799,12 @@ async function registerNewDomain() {
   }
 
   const domainName = document.getElementById("newDomainName").value.trim();
-  const bondAmount = document.getElementById("domainBondAmount").value;
   const paymentResource = document.getElementById("domainPaymentResourceSelect").value.trim();
   const registrarSelectEl = document.getElementById("domainRegistrarSelect");
   const registrarIndex = parseInt(registrarSelectEl.value);
 
   if (!domainName) {
     showError("Please enter a domain name");
-    return;
-  }
-
-  if (!bondAmount || parseFloat(bondAmount) <= 0) {
-    showError("Please enter a valid bond amount");
     return;
   }
 
@@ -3832,7 +3826,7 @@ async function registerNewDomain() {
     // Add .xrd TLD if not present
     const fullDomainName = domainName.includes('.') ? domainName : `${domainName}.xrd`;
 
-    // Calculate base price from pricing tier (what registrar fee is based on)
+    // Calculate base price from pricing tier (this is the bond amount AND what registrar fee is based on)
     const basePrice = calculateDomainPrice(fullDomainName);
 
     const manifest = getRegisterAndBondDomainManifest({
@@ -3841,7 +3835,7 @@ async function registerNewDomain() {
       registrarId: selectedRegistrar.id,
       domainName: fullDomainName,
       paymentResource: paymentResource,
-      bondAmount: bondAmount,
+      bondAmount: basePrice.toString(),  // Bond = base price from pricing tier
       basePrice: basePrice,
       registrarName: selectedRegistrar.name,
       registrarFeePercentage: selectedRegistrar.feePercentage,
@@ -3868,7 +3862,6 @@ async function registerNewDomain() {
 
       // Clear form
       document.getElementById("newDomainName").value = '';
-      document.getElementById("domainBondAmount").value = '';
 
       // Refresh domains list
       await detectUserDomains();
