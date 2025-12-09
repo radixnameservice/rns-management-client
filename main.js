@@ -417,22 +417,27 @@ function switchTab(tabName) {
 
 // ********** Step Management **********
 function goToStep(step) {
-  // Update progress bar (step 1 is mode selection, not in tracker)
-  // Tracker shows steps 2-4 as positions 1-3
-  if (step >= 2 && elements.progressSteps) {
-    const trackerStep = step - 1; // Map step 2->1, step 3->2, step 4->3
-    elements.progressSteps.forEach((el, index) => {
-      if (el) {
-        el.classList.toggle("active", index + 1 === trackerStep);
-        el.classList.toggle("completed", index + 1 < trackerStep);
-      }
-    });
-  }
-  
-  // Update step visibility - do all DOM changes atomically in a single pass
-  // This prevents triggering Radix toolkit's MutationObserver multiple times
-  if (elements.steps) {
-    elements.steps.forEach((el, index) => {
+  // Batch all DOM changes in requestAnimationFrame to minimize MutationObserver triggers
+  // from Radix toolkit's connect button component
+  requestAnimationFrame(() => {
+    // Update progress bar (step 1 is mode selection, not in tracker)
+    // Tracker shows steps 2-4 as positions 1-3
+    if (step >= 2) {
+      const trackerStep = step - 1; // Map step 2->1, step 3->2, step 4->3
+      // Re-query elements to avoid stale references
+      const progressSteps = document.querySelectorAll("#progressTracker .tracker-step");
+      progressSteps.forEach((el, index) => {
+        if (el) {
+          el.classList.toggle("active", index + 1 === trackerStep);
+          el.classList.toggle("completed", index + 1 < trackerStep);
+        }
+      });
+    }
+    
+    // Update step visibility - do all DOM changes atomically in a single pass
+    // Re-query elements to avoid stale references
+    const steps = document.querySelectorAll("#applicationFlow .step");
+    steps.forEach((el, index) => {
       if (el) {
         const isActive = (index + 1 === step);
         // Update both classes atomically
@@ -445,7 +450,7 @@ function goToStep(step) {
         }
       }
     });
-  }
+  });
   
   currentStep = step;
   
@@ -470,31 +475,34 @@ function previousStep() {
 function goToAdminStep(step) {
   currentAdminStep = step;
   
-  // Update progress tracker
-  const adminProgressSteps = document.querySelectorAll("#adminProgressTracker .tracker-step");
-  adminProgressSteps.forEach((el, index) => {
-    if (el) {
-      el.classList.toggle("active", index + 1 === step);
-      el.classList.toggle("completed", index + 1 < step);
-    }
-  });
-  
-  // Update step visibility atomically - all changes in single pass
-  // This prevents triggering Radix toolkit's MutationObserver multiple times
-  for (let i = 1; i <= 4; i++) {
-    const stepEl = document.getElementById(`adminStep${i}`);
-    if (stepEl) {
-      const isActive = (i === step);
-      // Update both classes atomically
-      if (isActive) {
-        stepEl.classList.add("active");
-        stepEl.classList.remove("hidden");
-      } else {
-        stepEl.classList.remove("active");
-        stepEl.classList.add("hidden");
+  // Batch all DOM changes in requestAnimationFrame to minimize MutationObserver triggers
+  // from Radix toolkit's connect button component
+  requestAnimationFrame(() => {
+    // Update progress tracker
+    const adminProgressSteps = document.querySelectorAll("#adminProgressTracker .tracker-step");
+    adminProgressSteps.forEach((el, index) => {
+      if (el) {
+        el.classList.toggle("active", index + 1 === step);
+        el.classList.toggle("completed", index + 1 < step);
+      }
+    });
+    
+    // Update step visibility atomically - all changes in single pass
+    for (let i = 1; i <= 4; i++) {
+      const stepEl = document.getElementById(`adminStep${i}`);
+      if (stepEl) {
+        const isActive = (i === step);
+        // Update both classes atomically
+        if (isActive) {
+          stepEl.classList.add("active");
+          stepEl.classList.remove("hidden");
+        } else {
+          stepEl.classList.remove("active");
+          stepEl.classList.add("hidden");
+        }
       }
     }
-  }
+  });
   
   // Auto-load all reserved domains when entering step 2 (Reserved Domain Management)
   if (step === 2 && adminComponentAddress) {
@@ -954,6 +962,9 @@ function showDeploymentSuccess(receipt) {
   const resourceAddresses = receipt.transaction.receipt.state_updates.new_global_entities
     .filter(entity => entity.entity_type === "FungibleResource" || entity.entity_type === "NonFungibleResource")
     .map(entity => entity.entity_address);
+  
+  // Reset tools state to clear any old component data
+  resetToolsState();
   
   // Store component address for component config
   adminComponentAddress = componentAddress;
@@ -2686,6 +2697,77 @@ function copyToClipboard(text) {
 
 // ********** Tools - Component Loading **********
 
+// Reset all tools-related state (called when a new component is deployed)
+function resetToolsState() {
+  // Clear loaded component address
+  loadedToolsComponentAddress = null;
+  
+  // Clear registrar-related state
+  window.userRegistrarBadges = [];
+  loadedRegistrarBadgeResource = null;
+  currentRegistrarBadgeId = null;
+  
+  // Clear domain-related state
+  userDomains = [];
+  currentManagedDomain = null;
+  acceptedPaymentResources = [];
+  priceLadder = {};
+  
+  // Clear input fields
+  if (elements.toolsComponentAddress) {
+    elements.toolsComponentAddress.value = '';
+  }
+  
+  const newDomainNameInput = document.getElementById("newDomainName");
+  if (newDomainNameInput) {
+    newDomainNameInput.value = '';
+  }
+  
+  // Reset dropdowns
+  const registrarSelect = document.getElementById("domainRegistrarSelect");
+  if (registrarSelect) {
+    registrarSelect.innerHTML = '<option value="">No registrar badges found</option>';
+  }
+  
+  const paymentResourceSelect = document.getElementById("domainPaymentResourceSelect");
+  if (paymentResourceSelect) {
+    paymentResourceSelect.innerHTML = '<option value="">No payment resources configured</option>';
+  }
+  
+  // Hide loaded component section
+  if (elements.toolsComponentLoaded) {
+    elements.toolsComponentLoaded.classList.add("hidden");
+  }
+  
+  // Hide registrar badges list
+  const registrarBadgesList = document.getElementById("registrarBadgesList");
+  if (registrarBadgesList) {
+    registrarBadgesList.classList.add("hidden");
+  }
+  
+  // Hide domains list
+  const domainsList = document.getElementById("domainsList");
+  if (domainsList) {
+    domainsList.classList.add("hidden");
+  }
+  
+  // Hide registrar info section
+  const registrarInfoSection = document.getElementById("registrarInfoSection");
+  if (registrarInfoSection) {
+    registrarInfoSection.classList.add("hidden");
+  }
+  
+  // Clear dApp definition results
+  if (elements.dappDefinitionResult) {
+    elements.dappDefinitionResult.classList.add("hidden");
+  }
+  
+  // Update visibility states
+  updateToolsPanelVisibility();
+  
+  console.log("✅ Tools state reset - ready for new component");
+}
+
 async function loadToolsComponent() {
   try {
     const componentAddress = elements.toolsComponentAddress.value.trim();
@@ -3124,15 +3206,6 @@ async function detectRegistrarBadges(silent = false) {
       return;
     }
     
-    if (!account) {
-      if (!silent) {
-        elements.registrarBadgesList.classList.add("hidden");
-      }
-      // Clear badge list for Test Data Setup
-      window.userRegistrarBadges = [];
-      return;
-    }
-    
     if (!silent) {
       showTransactionModal("Detecting registrar badges...");
     }
@@ -3157,38 +3230,72 @@ async function detectRegistrarBadges(silent = false) {
     
     const registrarBadgeResource = registrarBadgeField.value;
     
-    // Get user's account details
-    const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
-    const nonFungibleResources = accountDetails.non_fungible_resources?.items || [];
-    
-    // Find registrar badges in user's wallet
-    const registrarBadges = nonFungibleResources.find(
-      nfr => nfr.resource_address === registrarBadgeResource
-    );
-    
-    if (!registrarBadges || !registrarBadges.vaults?.items?.length) {
-      if (!silent) {
-        hideTransactionModal();
-        showError("No registrar badges found in your wallet for this component");
-      }
-      elements.registrarBadgesList.classList.add("hidden");
-      // Clear badge list for Test Data Setup
-      window.userRegistrarBadges = [];
-      return;
-    }
-    
-    // Get all badge IDs from all vaults
+    // Try to get ALL registrar badge IDs from the resource
+    // Note: This may not work if the API doesn't support enumerating all NFT IDs
     const allBadgeIds = [];
-    for (const vault of registrarBadges.vaults.items) {
-      if (vault.items && vault.items.length > 0) {
-        allBadgeIds.push(...vault.items);
+    let userBadgeIds = [];
+    let showAllBadges = false;
+    
+    try {
+      let cursor = undefined;
+      
+      do {
+        const response = await gatewayApi.state.innerClient.nonFungibleIds({
+          stateNonFungibleIdsRequest: {
+            resource_address: registrarBadgeResource,
+            cursor: cursor,
+            limit_per_page: 100
+          }
+        });
+        
+        if (response.items && response.items.length > 0) {
+          allBadgeIds.push(...response.items);
+        }
+        
+        cursor = response.next_cursor;
+      } while (cursor !== null && cursor !== undefined);
+      
+      showAllBadges = true;
+      console.log(`✅ Found ${allBadgeIds.length} total registrar badges in the system`);
+    } catch (error) {
+      console.warn("Could not enumerate all registrar badges from resource (API may not support this):", error);
+      console.warn("Falling back to showing only user's badges");
+      showAllBadges = false;
+    }
+    
+    // Get user's badges (if account is connected)
+    if (account) {
+      try {
+        const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
+        const nonFungibleResources = accountDetails.non_fungible_resources?.items || [];
+        
+        const registrarBadges = nonFungibleResources.find(
+          nfr => nfr.resource_address === registrarBadgeResource
+        );
+        
+        if (registrarBadges && registrarBadges.vaults?.items?.length) {
+          for (const vault of registrarBadges.vaults.items) {
+            if (vault.items && vault.items.length > 0) {
+              userBadgeIds.push(...vault.items);
+            }
+          }
+        }
+      } catch (error) {
+        console.warn("Could not fetch user's registrar badges:", error);
       }
     }
     
-    if (allBadgeIds.length === 0) {
+    // Determine which badges to display
+    const badgesToDisplay = showAllBadges && allBadgeIds.length > 0 ? allBadgeIds : userBadgeIds;
+    
+    if (badgesToDisplay.length === 0) {
       if (!silent) {
         hideTransactionModal();
-        showError("No registrar badges found in your wallet for this component");
+        if (!account) {
+          showError("Please connect your wallet to view registrar badges");
+        } else {
+          showError("No registrar badges found in your wallet for this component");
+        }
       }
       elements.registrarBadgesList.classList.add("hidden");
       // Clear badge list for Test Data Setup
@@ -3198,9 +3305,9 @@ async function detectRegistrarBadges(silent = false) {
     
     // Display badges
     let badgesHTML = '';
-    for (const badgeId of allBadgeIds) {
+    for (const badgeId of badgesToDisplay) {
       badgesHTML += `
-        <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #333; border-radius: 4px; margin-bottom: 8px;">
+        <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #e2e8f0; border-radius: 4px; margin-bottom: 8px;">
           <span class="info-value">Badge ID: <strong>${badgeId}</strong></span>
           <button class="btn btn-secondary" onclick="window.loadRegistrarInfo('${badgeId}')">Manage</button>
         </div>
@@ -3212,7 +3319,7 @@ async function detectRegistrarBadges(silent = false) {
     
     // Populate global badge list for Test Data Setup module
     // Fetch registrar info for each badge to get fee percentage
-    const badgeInfoPromises = allBadgeIds.map(async badgeId => {
+    const badgeInfoPromises = badgesToDisplay.map(async badgeId => {
       try {
         const registrarInfo = await queryRegistrarInfo(badgeId, registrarBadgeResource);
         return {
@@ -3239,7 +3346,7 @@ async function detectRegistrarBadges(silent = false) {
     
     if (!silent) {
       hideTransactionModal();
-      showSuccess(`✅ Found ${allBadgeIds.length} registrar badge${allBadgeIds.length === 1 ? '' : 's'}!`);
+      showSuccess(`✅ Found ${badgesToDisplay.length} registrar badge${badgesToDisplay.length === 1 ? '' : 's'}!`);
     }
   } catch (error) {
     console.error("❌ Badge detection error:", error);
@@ -3828,6 +3935,29 @@ async function registerNewDomain() {
 
     // Calculate base price from pricing tier (this is the bond amount AND what registrar fee is based on)
     const basePrice = calculateDomainPrice(fullDomainName);
+
+    // Calculate total amount needed (bond + registrar fee)
+    const registrarFee = basePrice * (selectedRegistrar.feePercentage / 100);
+    const totalAmountNeeded = basePrice + registrarFee;
+
+    // Check if user has enough of the payment resource
+    const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
+    const paymentResourceBalance = accountDetails.fungible_resources?.items?.find(
+      r => r.resource_address === paymentResource
+    )?.vaults?.items?.[0]?.amount || "0";
+    
+    const userBalance = parseFloat(paymentResourceBalance);
+    
+    if (userBalance < totalAmountNeeded) {
+      hideTransactionModal();
+      const shortAddress = paymentResource.substring(0, 18) + '...' + paymentResource.substring(paymentResource.length - 6);
+      if (userBalance === 0) {
+        showError(`❌ You don't have any of the selected payment token (${shortAddress}) in your wallet. Please acquire some or select a different payment resource.`);
+      } else {
+        showError(`❌ Insufficient balance. You need ${totalAmountNeeded.toFixed(2)} but only have ${userBalance.toFixed(2)} of the selected payment token.`);
+      }
+      return;
+    }
 
     const manifest = getRegisterAndBondDomainManifest({
       componentAddress: loadedToolsComponentAddress,
@@ -4856,82 +4986,87 @@ document.addEventListener("DOMContentLoaded", () => {
   // Mode selection
   elements.modeCards.forEach((card, index) => {
     card.addEventListener('click', () => {
-      // Remove selected class from all cards
-      elements.modeCards.forEach(c => c.classList.remove('selected'));
-      
-      // Add selected class to clicked card
-      card.classList.add('selected');
-      
-      // Store selected mode
+      // Store selected mode first (before DOM changes)
       selectedMode = card.dataset.mode;
       
-      // Handle different modes
-      if (selectedMode === 'deploy') {
-        // Show deployment progress tracker, hide admin tracker
-        if (elements.progressTracker) {
-          elements.progressTracker.classList.remove('hidden');
+      // Batch all DOM changes in requestAnimationFrame to minimize MutationObserver triggers
+      // from Radix toolkit's connect button component
+      requestAnimationFrame(() => {
+        // Remove selected class from all cards
+        elements.modeCards.forEach(c => c.classList.remove('selected'));
+        
+        // Add selected class to clicked card
+        card.classList.add('selected');
+        
+        // Handle different modes
+        if (selectedMode === 'deploy') {
+          // Show deployment progress tracker, hide admin tracker
+          elements.progressTracker?.classList.remove('hidden');
+          
+          // Hide admin progress tracker
+          document.getElementById("adminProgressTracker")?.classList.add('hidden');
+          
+          elements.applicationFlow?.classList.remove('hidden');
+          
+          elements.adminContent?.classList.add('hidden');
+          elements.adminContent?.classList.remove('active');
+          elements.toolsContent?.classList.add('hidden');
+          elements.toolsContent?.classList.remove('active');
+          
+          // Automatically advance to step 2 (Package Setup) since mode selection is complete
+          goToStep(2);
+        } else if (selectedMode === 'admin') {
+          // Hide deployment progress tracker and applicationFlow
+          elements.progressTracker?.classList.add('hidden');
+          elements.applicationFlow?.classList.add('hidden');
+          switchToMode('admin');
+        } else if (selectedMode === 'manage') {
+          // Hide BOTH progress trackers and applicationFlow
+          elements.progressTracker?.classList.add('hidden');
+          document.getElementById("adminProgressTracker")?.classList.add('hidden');
+          elements.applicationFlow?.classList.add('hidden');
+          switchToMode('manage');
+        } else if (selectedMode === 'tools') {
+          // Hide BOTH progress trackers and applicationFlow
+          elements.progressTracker?.classList.add('hidden');
+          document.getElementById("adminProgressTracker")?.classList.add('hidden');
+          elements.applicationFlow?.classList.add('hidden');
+          switchToMode('tools');
         }
-        
-        // Hide admin progress tracker
-        document.getElementById("adminProgressTracker")?.classList.add('hidden');
-        
-        if (elements.applicationFlow) {
-          elements.applicationFlow.classList.remove('hidden');
-        }
-        
-        elements.adminContent?.classList.add('hidden');
-        elements.adminContent?.classList.remove('active');
-        elements.toolsContent?.classList.add('hidden');
-        elements.toolsContent?.classList.remove('active');
-        
-        // Automatically advance to step 2 (Package Setup) since mode selection is complete
-        goToStep(2);
-      } else if (selectedMode === 'admin') {
-        // Hide deployment progress tracker and applicationFlow
-        elements.progressTracker?.classList.add('hidden');
-        elements.applicationFlow?.classList.add('hidden');
-        switchToMode('admin');
-      } else if (selectedMode === 'manage') {
-        // Hide BOTH progress trackers and applicationFlow
-        elements.progressTracker?.classList.add('hidden');
-        document.getElementById("adminProgressTracker")?.classList.add('hidden');
-        elements.applicationFlow?.classList.add('hidden');
-        switchToMode('manage');
-      } else if (selectedMode === 'tools') {
-        // Hide BOTH progress trackers and applicationFlow
-        elements.progressTracker?.classList.add('hidden');
-        document.getElementById("adminProgressTracker")?.classList.add('hidden');
-        elements.applicationFlow?.classList.add('hidden');
-        switchToMode('tools');
-      }
+      });
     });
   });
 
   // Package option selection
   elements.packageOptionCards.forEach(card => {
     card.addEventListener('click', () => {
-      // Remove selected class from all cards
-      elements.packageOptionCards.forEach(c => c.classList.remove('selected'));
-      
-      // Add selected class to clicked card
-      card.classList.add('selected');
-      
-      // Store selected package option
+      // Store selected package option first (before DOM changes)
       selectedPackageOption = card.dataset.option;
       
-      // Show/hide appropriate sections
-      if (selectedPackageOption === 'existing') {
-        elements.existingPackageSection.classList.remove('hidden');
-        elements.newPackageSection.classList.add('hidden');
-      } else if (selectedPackageOption === 'new') {
-        elements.existingPackageSection.classList.add('hidden');
-        elements.newPackageSection.classList.remove('hidden');
-      }
-      
-      // Enable next button
-      elements.step2Next.disabled = false;
-      elements.step2Next.textContent = "Next →";
-      
+      // Batch all DOM changes in requestAnimationFrame to minimize MutationObserver triggers
+      // from Radix toolkit's connect button component
+      requestAnimationFrame(() => {
+        // Remove selected class from all cards
+        elements.packageOptionCards.forEach(c => c.classList.remove('selected'));
+        
+        // Add selected class to clicked card
+        card.classList.add('selected');
+        
+        // Show/hide appropriate sections
+        if (selectedPackageOption === 'existing') {
+          elements.existingPackageSection?.classList.remove('hidden');
+          elements.newPackageSection?.classList.add('hidden');
+        } else if (selectedPackageOption === 'new') {
+          elements.existingPackageSection?.classList.add('hidden');
+          elements.newPackageSection?.classList.remove('hidden');
+        }
+        
+        // Enable next button
+        if (elements.step2Next) {
+          elements.step2Next.disabled = false;
+          elements.step2Next.textContent = "Next →";
+        }
+      });
     });
   });
 
