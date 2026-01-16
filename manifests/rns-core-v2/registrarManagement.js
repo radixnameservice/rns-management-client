@@ -136,4 +136,3 @@ CALL_METHOD
   NonFungibleLocalId("${registrarId}");
 `;
 }
-

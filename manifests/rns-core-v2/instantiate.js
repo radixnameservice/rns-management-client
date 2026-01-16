@@ -7,8 +7,7 @@ export const getRNSInstantiateManifest = ({
   packageAddress,
   paymentResources = [],
   legacyDomainResource,
-  v1AdminBadgeResource,
-  v1UpgradeBadgeResource,
+  // V1 badge resources removed - now handled by separate V1 Badge Lockers contract
   domainIconUrl,
   adminBadgeIconUrl,
   configBadgeIconUrl,
@@ -44,14 +43,14 @@ export const getRNSInstantiateManifest = ({
     ? `Array<String>(${subregistryTags.map(tag => `"${tag}"`).join(', ')})`
     : "Array<String>()";
 
+  // RNS Core V2 instantiation - 16 parameters
+  // V1 badge resources are now handled by the separate V1 Badge Lockers contract
   return `CALL_FUNCTION
   Address("${packageAddress}")
   "RNSV2"
   "instantiate"
   ${paymentResourcesArray}
   Address("${legacyDomainResource}")
-  Address("${v1AdminBadgeResource}")
-  Address("${v1UpgradeBadgeResource}")
   "${domainIconUrl}"
   "${adminBadgeIconUrl}"
   "${configBadgeIconUrl}"
@@ -80,6 +79,7 @@ CALL_METHOD
 
 /**
  * Get default resource addresses based on network
+ * Note: V1 badge resources are now handled by the separate V1 Badge Lockers contract
  */
 export const getDefaultResources = (networkId = "stokenet") => {
   if (networkId === "mainnet") {
@@ -92,8 +92,6 @@ export const getDefaultResources = (networkId = "stokenet") => {
         packageAddress: "package_rdx1pk...",
         paymentResource: "resource_rdx1t4...",
         legacyDomainResource: "resource_rdx1tk...",
-        v1AdminBadgeResource: "resource_rdx1th...",
-        v1UpgradeBadgeResource: "resource_rdx1tj...",
         componentAddress: "component_rdx1cp...",
         accountAddress: "account_rdx1c8..."
       }
@@ -109,8 +107,6 @@ export const getDefaultResources = (networkId = "stokenet") => {
         packageAddress: "package_tdx_2_1pk...",
         paymentResource: "resource_tdx_2_1t4...",
         legacyDomainResource: "resource_tdx_2_1tk...",
-        v1AdminBadgeResource: "resource_tdx_2_1th...",
-        v1UpgradeBadgeResource: "resource_tdx_2_1tj...",
         componentAddress: "component_tdx_2_1cp...",
         accountAddress: "account_tdx_2_1c8..."
       }
@@ -120,6 +116,7 @@ export const getDefaultResources = (networkId = "stokenet") => {
 
 /**
  * Validate RNS instantiate parameters
+ * Note: V1 badge resources are no longer required - they're handled by the separate V1 Badge Lockers contract
  */
 export const validateInstantiateParams = (params) => {
   const errors = [];
@@ -132,13 +129,7 @@ export const validateInstantiateParams = (params) => {
     errors.push("Legacy domain resource address is required");
   }
 
-  if (!params.v1AdminBadgeResource) {
-    errors.push("V1 admin badge resource address is required");
-  }
-
-  if (!params.v1UpgradeBadgeResource) {
-    errors.push("V1 upgrade badge resource address is required");
-  }
+  // V1 badge resources removed - now handled by separate V1 Badge Lockers contract
 
   if (!params.domainIconUrl || !isValidUrl(params.domainIconUrl)) {
     errors.push("Valid domain icon URL is required");
@@ -165,14 +156,6 @@ export const validateInstantiateParams = (params) => {
   
   if (params.legacyDomainResource && !addressPattern.test(params.legacyDomainResource)) {
     errors.push("Invalid legacy domain resource address format");
-  }
-
-  if (params.v1AdminBadgeResource && !addressPattern.test(params.v1AdminBadgeResource)) {
-    errors.push("Invalid V1 admin badge resource address format");
-  }
-
-  if (params.v1UpgradeBadgeResource && !addressPattern.test(params.v1UpgradeBadgeResource)) {
-    errors.push("Invalid V1 upgrade badge resource address format");
   }
 
   // Validate payment resources

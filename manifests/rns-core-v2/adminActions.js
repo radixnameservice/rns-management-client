@@ -281,14 +281,14 @@ function isValidDomainName(domain) {
 
 /**
  * Format component info for display
+ * Note: V1 badge locking status is now handled by the separate V1AuthRelinquishment contract
  */
 export const formatComponentInfo = (componentData) => {
   if (!componentData) {
     return {
       registrationActive: false,
       domainCount: 0,
-      reservedDomainCount: 0,
-      v1BadgesLocked: false
+      reservedDomainCount: 0
     };
   }
 
@@ -296,7 +296,6 @@ export const formatComponentInfo = (componentData) => {
     registrationActive: componentData.is_registration_active || false,
     domainCount: componentData.domain_count || 0,
     reservedDomainCount: componentData.reserved_domain_count || 0,
-    v1BadgesLocked: componentData.v1_badges_locked || false,
     adminBadgeExists: componentData.admin_badge_exists || false,
     totalBondedValue: componentData.total_bonded_value || "0",
     supportedPaymentResources: componentData.payment_resources || []

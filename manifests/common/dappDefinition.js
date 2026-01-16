@@ -33,7 +33,9 @@ export function getDappDefinitionManifest({
   networkId = 'stokenet'
 }) {
   // Store networkId for helper functions to use
-  window._currentManifestNetwork = networkId;
+  if (typeof window !== 'undefined') {
+    window._currentManifestNetwork = networkId;
+  }
   
   // Build claimed websites array (as Array<String>)
   const websitesArray = claimedWebsites.length > 0

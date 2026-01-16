@@ -158,7 +158,7 @@ export function estimatePackageDeploymentCost({ wasmSize = 0, rpdSize = 0 } = {}
 }
 
 /**
- * Get package deployment instructions
+ * Get package deployment instructions for RNS Core V2
  */
 export const getPackageDeploymentInstructions = (networkId = "stokenet") => {
   const consoleUrl = networkId === "mainnet"
@@ -180,6 +180,33 @@ export const getPackageDeploymentInstructions = (networkId = "stokenet") => {
     ],
     consoleUrl,
     requiredFiles: ["rns-core-v2.wasm", "rns-core-v2.rpd"],
+    network: networkId
+  };
+};
+
+/**
+ * Get package deployment instructions for V1 Badge Lockers
+ */
+export const getV1BadgeLockersDeploymentInstructions = (networkId = "stokenet") => {
+  const consoleUrl = networkId === "mainnet"
+    ? "https://console.radixdlt.com/deploy-package"
+    : "https://stokenet-console.radixdlt.com/deploy-package";
+
+  return {
+    steps: [
+      "Build your V1 Badge Lockers package using `scrypto build`",
+      "Locate the generated files in `target/wasm32-unknown-unknown/release/`:",
+      "  - rns_v1_badge_lockers.wasm",
+      "  - rns_v1_badge_lockers.rpd",
+      `Open the Radix Developer Console: ${consoleUrl}`,
+      "Connect your Radix Wallet",
+      "Upload both .wasm and .rpd files",
+      "Set owner role to 'None' (REQUIRED - this ensures badges are permanently locked)",
+      "Sign the deployment transaction in your wallet",
+      "Copy the resulting package address for use in instantiation"
+    ],
+    consoleUrl,
+    requiredFiles: ["rns_v1_badge_lockers.wasm", "rns_v1_badge_lockers.rpd"],
     network: networkId
   };
 };
