@@ -47,8 +47,7 @@
     <div class="progress-tracker">
       <div class="tracker-step active" data-step="1">Component</div>
       <div class="tracker-step" data-step="2">Reservations</div>
-      <div class="tracker-step" data-step="3">Badge Locks</div>
-      <div class="tracker-step" data-step="4">Activation</div>
+      <div class="tracker-step" data-step="3">Activation</div>
     </div>
   </div>
 
@@ -99,8 +98,8 @@
               <p>Manage RNS components with admin privileges</p>
               <ul class="mode-features">
                 <li>Bulk domain upload</li>
-                <li>V1 badge management</li>
-                <li>Component administration</li>
+                <li>Reserved domain management</li>
+                <li>Component activation</li>
               </ul>
             </div>
 
@@ -225,8 +224,6 @@
                   <li><strong>fUSD</strong> - Fake USD payment token (100,000 tokens)</li>
                   <li><strong>sUSD</strong> - Stable USD payment token (100,000 tokens)</li>
                   <li><strong>Legacy Domain Resource</strong> - NFT collection for migration testing</li>
-                  <li><strong>V1 Admin Badge Resource</strong> - Admin badges for locking (5 badges)</li>
-                  <li><strong>V1 Upgrade Badge Resource</strong> - Upgrade badge for locking (1 badge)</li>
                 </ul>
                 <p class="helper-note">All resources and tokens will be created and deposited to your account.</p>
               </div>
@@ -260,23 +257,9 @@
                     <button class="btn-copy">Copy</button>
                   </div>
                 </div>
-                <div class="resource-result">
-                  <label>V1 Admin Badge Resource:</label>
-                  <div class="address-display">
-                    <span id="createdV1AdminBadge"></span>
-                    <button class="btn-copy">Copy</button>
-                  </div>
-                </div>
-                <div class="resource-result">
-                  <label>V1 Upgrade Badge Resource:</label>
-                  <div class="address-display">
-                    <span id="createdV1UpgradeBadge"></span>
-                    <button class="btn-copy">Copy</button>
-                  </div>
-                </div>
               </div>
               <button id="useCreatedResources" class="btn btn-primary">
-                📝 Auto-fill Forms with Created Resources
+                📝 Auto-fill Forms
               </button>
             </div>
           </div>
@@ -296,18 +279,11 @@
           </div>
 
           <div class="form-section">
-            <h3>Legacy & V1 Resources</h3>
+            <h3>Legacy Resources</h3>
             <div class="form-group">
               <label for="legacyDomainResource">Legacy Domain Resource Address:</label>
               <input id="legacyDomainResource" type="text" class="form-control" placeholder="">
-            </div>
-            <div class="form-group">
-              <label for="v1AdminBadgeResource">V1 Admin Badge Resource Address:</label>
-              <input id="v1AdminBadgeResource" type="text" class="form-control" placeholder="">
-            </div>
-            <div class="form-group">
-              <label for="v1UpgradeBadgeResource">V1 Service Upgrade Badge Resource:</label>
-              <input id="v1UpgradeBadgeResource" type="text" class="form-control" placeholder="">
+              <small class="form-help">NFT resource for migrating V1 domains (optional for new deployments)</small>
             </div>
           </div>
 
@@ -503,7 +479,7 @@
             <ul>
               <li>✅ Load and manage RNS components</li>
               <li>✅ Bulk upload reserved domains</li>
-              <li>✅ Lock V1 admin and upgrade badges</li>
+              <li>✅ Lookup and manage reservations</li>
               <li>✅ Burn admin badges to activate public registration</li>
             </ul>
           </div>
@@ -553,6 +529,12 @@
               <span id="adminDappDefDisplay" class="address-value"></span>
               <button class="btn-copy"
                 onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay').textContent)">Copy</button>
+            </div>
+            <div class="component-info-display hidden">
+              <label>dApp Locker:</label>
+              <span id="adminDappLockerDisplay" class="address-value"></span>
+              <button class="btn-copy"
+                onclick="navigator.clipboard.writeText(document.getElementById('adminDappLockerDisplay').textContent)">Copy</button>
             </div>
           </div>
 
@@ -638,9 +620,9 @@
           </div>
         </div>
 
-        <!-- Admin Step 3: V1 Badge Locking -->
+        <!-- Admin Step 3: Activation -->
         <div id="adminStep3" class="step">
-          <h2>Badge Locks</h2>
+          <h2>Activation</h2>
 
           <div id="adminComponentInfo" class="form-section">
             <h3>Component</h3>
@@ -656,60 +638,15 @@
               <button class="btn-copy"
                 onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay3').textContent)">Copy</button>
             </div>
-          </div>
-
-          <div class="form-section">
-            <h3>Lock V1 Admin Badges</h3>
-            <p class="form-help">Lock V1 admin badges to permanently deprecate the old system.</p>
-
-            <div id="adminBadgeStatus" class="status-display"></div>
-
-            <button id="lockAdminBadges" class="btn btn-warning">Lock All Admin Badges from Wallet</button>
-          </div>
-
-          <div class="form-section">
-            <h3>Lock V1 Upgrade Badges</h3>
-            <p class="form-help">Lock upgrade badges to prevent service modifications.</p>
-
-            <div id="upgradeBadgeStatus" class="status-display"></div>
-
-            <button id="lockUpgradeBadge" class="btn btn-warning">Lock All Upgrade Badges from Wallet</button>
-          </div>
-
-          <div class="form-section">
-            <h3>V1 Lock Status Summary</h3>
-            <p class="form-help">Overall status of V1 badge locking for RNS V2 launch validation.</p>
-            <div id="lockStatusResults" class="status-display"></div>
-            <button id="refreshLockStatus" class="btn btn-secondary">Refresh Status</button>
-          </div>
-
-          <div class="step-navigation">
-            <button id="adminStep3Back" class="btn btn-secondary">← Back</button>
-            <button id="adminStep3Next" class="btn btn-primary">Continue →</button>
-          </div>
-        </div>
-
-        <!-- Admin Step 4: Activation -->
-        <div id="adminStep4" class="step">
-          <h2>Activation</h2>
-
-          <div id="adminComponentInfo" class="form-section">
-            <h3>Component</h3>
-            <div class="component-info-display">
-              <label>Address:</label>
-              <span id="adminComponentDisplay4" class="address-value"></span>
-              <button class="btn-copy"
-                onclick="navigator.clipboard.writeText(document.getElementById('adminComponentDisplay4').textContent)">Copy</button>
-            </div>
             <div class="component-info-display hidden">
-              <label>dApp Definition:</label>
-              <span id="adminDappDefDisplay4" class="address-value"></span>
+              <label>dApp Locker:</label>
+              <span id="adminDappLockerDisplay3" class="address-value"></span>
               <button class="btn-copy"
-                onclick="navigator.clipboard.writeText(document.getElementById('adminDappDefDisplay4').textContent)">Copy</button>
+                onclick="navigator.clipboard.writeText(document.getElementById('adminDappLockerDisplay3').textContent)">Copy</button>
             </div>
           </div>
 
-          <div class="form-section danger-zone">
+          <div id="burnAdminBadgeSection" class="form-section danger-zone">
             <h3>🔥 Burn Admin Badge</h3>
 
             <p class="form-help" style="margin-bottom: 20px; font-size: 15px; line-height: 1.6;">
@@ -727,17 +664,17 @@
 
               <button id="burnAdminBadge" class="btn btn-danger">🔥 Burn Admin Badge</button>
             </div>
+          </div>
 
-            <div id="burnCompletionMessage" class="success-message hidden" style="margin-top: 20px;">
-              <div style="font-size: 18px; margin-bottom: 10px;"><strong>Admin Badge Burned Successfully!</strong>
-              </div>
-              <p style="margin: 0;">Public domain registration is now active. The RNS V2 system is fully decentralized
-                and permissionless.</p>
+          <div id="burnCompletionMessage" class="success-message hidden" style="margin-top: 20px;">
+            <div style="font-size: 18px; margin-bottom: 10px;"><strong>✅ Admin Badge Burned Successfully!</strong>
             </div>
+            <p style="margin: 0;">Public domain registration is now active. The RNS V2 system is fully decentralized
+              and permissionless.</p>
           </div>
 
           <div class="step-navigation">
-            <button id="adminStep4Back" class="btn btn-secondary">← Back</button>
+            <button id="adminStep3Back" class="btn btn-secondary">← Back</button>
             <button id="adminComplete" class="btn btn-success">Return to Mode Selection</button>
           </div>
         </div>
@@ -836,13 +773,29 @@
                 <small class="form-help">Comma-separated tags to categorize your dApp</small>
               </div>
 
-              <h4 style="margin-top: 24px;">Claimed Websites (Optional)</h4>
-              <p class="form-help">Optionally specify website URLs to link to your dApp definition (one per line). Leave
-                empty for universal access.</p>
+              <h4 style="margin-top: 24px;">Claimed Websites</h4>
+              <p class="form-help">Website URLs to link to your dApp definition (one per line). <strong>Required for mainnet</strong> - 
+                the wallet verifies your website is authorized via <code>/.well-known/radix.json</code>.</p>
               <div class="form-group">
                 <textarea id="dappWebsites" class="form-control" rows="4"
-                  placeholder="e.g. https://example.com&#10;https://app.example.com (or leave empty)"></textarea>
-                <small class="form-help">Empty = dApp works from any website without restrictions</small>
+                  placeholder="e.g. https://example.com&#10;https://app.example.com"></textarea>
+                <small class="form-help">Each website must host a <code>/.well-known/radix.json</code> file containing your dApp definition address</small>
+              </div>
+
+              <h4 style="margin-top: 24px;">Claimed Entities (Optional)</h4>
+              <p class="form-help">Component, package, or resource addresses to claim ownership of (one per line). 
+                Only needed if you're claiming your own deployed entities. <strong>Not required</strong> when integrating with 
+                existing dApps like RNS - those entities already link to their own dApp definitions.</p>
+              <div class="form-group">
+                <textarea id="dappEntities" class="form-control" rows="3"
+                  placeholder="e.g. component_tdx_2_1...&#10;resource_tdx_2_1... (or leave empty)"></textarea>
+                <small class="form-help">Leave empty if you're just creating a dApp definition for website verification</small>
+              </div>
+
+              <div class="info-message" style="margin-top: 16px; margin-bottom: 16px;">
+                <p style="margin: 0;"><strong>💡 Tip for RNS integrators:</strong> You don't need to claim RNS components. 
+                  Just create your dApp definition with your website claimed. When your transactions interact with RNS, 
+                  the wallet will show RNS branding from the RNS components' own metadata.</p>
               </div>
 
               <div class="form-actions">
@@ -853,11 +806,10 @@
             <div id="dappManifestOutput" class="manifest-output hidden">
               <h4>Preview</h4>
 
-              <div id="discoveredEntities" class="form-section">
-                <h5>Discovered Entities</h5>
+              <div id="discoveredEntities" class="form-section hidden">
+                <h5>Claimed Entities</h5>
                 <div id="entitiesList" class="entities-list"></div>
-                <p class="form-help" style="margin-top: 12px;">These addresses will be claimed by your dApp definition
-                </p>
+                <p class="form-help" style="margin-top: 12px;">These addresses will be claimed by your dApp definition</p>
               </div>
 
               <h5 style="margin-top: 20px;">Transaction Manifest</h5>
@@ -866,8 +818,8 @@
                 <button class="btn-copy" id="copyDappManifest">Copy Manifest</button>
               </div>
               <div class="manifest-info">
-                <p><strong>⚠️ Important:</strong> This manifest will create a new account as your dApp definition. Save
-                  the account address after submission!</p>
+                <p><strong>⚠️ Important:</strong> This manifest will convert the specified account into a dApp definition by setting 
+                  the required metadata. Make sure you own the account and have it connected to your wallet.</p>
               </div>
 
               <div class="form-actions" style="margin-top: 20px;">

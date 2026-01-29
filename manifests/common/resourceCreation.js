@@ -1,13 +1,15 @@
 /**
- * RNS V2 - Dummy Resource Creation Manifest Builder
+ * RNS V2 - Resource Creation Manifest Builders
  * Creates testing resources for Stokenet development
  * 
- * Creates 5 resources using official Radix manifest syntax:
+ * RNS Core V2 Resources (getCreateDummyResourcesManifest):
  * 1. fUSD - Fake USD payment token (100,000 tokens, 18 decimals)
  * 2. sUSD - Stable USD payment token (100,000 tokens, 18 decimals)
  * 3. Legacy Domain NFT - Non-fungible collection (1 example NFT)
- * 4. V1 Admin Badge - Admin badges (5 indivisible badges)
- * 5. V1 Upgrade Badge - Upgrade badge (1 indivisible badge)
+ * 
+ * V1 Badge Lockers Resources (getCreateV1BadgeResourcesManifest):
+ * 1. V1 Admin Badge - Admin badges (5 indivisible badges)
+ * 2. V1 Upgrade Badge - Upgrade badge (1 indivisible badge)
  * 
  * Uses CREATE_FUNGIBLE_RESOURCE_WITH_INITIAL_SUPPLY and 
  * CREATE_NON_FUNGIBLE_RESOURCE_WITH_INITIAL_SUPPLY instructions
@@ -15,7 +17,7 @@
  */
 
 /**
- * Create dummy resources for RNS testing
+ * Create dummy resources for RNS Core V2 testing
  */
 export const getCreateDummyResourcesManifest = ({
   accountAddress,
@@ -98,7 +100,41 @@ CREATE_NON_FUNGIBLE_RESOURCE_WITH_INITIAL_SUPPLY
     None
 ;
 
-# Create V1 Admin Badge
+CALL_METHOD
+    Address("${accountAddress}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP")
+;`;
+};
+
+/**
+ * Parse resource creation transaction receipt
+ */
+export const parseResourceCreationReceipt = (receipt) => {
+  const newGlobalEntities = receipt.transaction.receipt.state_updates.new_global_entities || [];
+  
+  if (newGlobalEntities.length < 3) {
+    throw new Error(`Expected 3 resources but got ${newGlobalEntities.length}`);
+  }
+
+  const resourceAddresses = newGlobalEntities.map(entity => entity.entity_address);
+
+  return {
+    fUSD: resourceAddresses[0],
+    sUSD: resourceAddresses[1], 
+    legacyDomainResource: resourceAddresses[2]
+  };
+};
+
+/**
+ * Create V1 badge resources for V1 Badge Lockers testing
+ * (Separate from Core V2 resources - used in V1 Badge Lockers section)
+ */
+export const getCreateV1BadgeResourcesManifest = ({
+  accountAddress,
+  networkId = "stokenet"
+}) => {
+  return `# Create V1 Admin Badge
 CREATE_FUNGIBLE_RESOURCE_WITH_INITIAL_SUPPLY
     Enum<OwnerRole::None>()
     true
@@ -154,23 +190,20 @@ CALL_METHOD
 };
 
 /**
- * Parse resource creation transaction receipt
+ * Parse V1 badge resource creation transaction receipt
  */
-export const parseResourceCreationReceipt = (receipt) => {
+export const parseV1BadgeResourceCreationReceipt = (receipt) => {
   const newGlobalEntities = receipt.transaction.receipt.state_updates.new_global_entities || [];
   
-  if (newGlobalEntities.length < 5) {
-    throw new Error(`Expected 5 resources but got ${newGlobalEntities.length}`);
+  if (newGlobalEntities.length < 2) {
+    throw new Error(`Expected 2 resources but got ${newGlobalEntities.length}`);
   }
 
   const resourceAddresses = newGlobalEntities.map(entity => entity.entity_address);
 
   return {
-    fUSD: resourceAddresses[0],
-    sUSD: resourceAddresses[1], 
-    legacyDomainResource: resourceAddresses[2],
-    v1AdminBadgeResource: resourceAddresses[3],
-    v1UpgradeBadgeResource: resourceAddresses[4]
+    v1AdminBadgeResource: resourceAddresses[0],
+    v1UpgradeBadgeResource: resourceAddresses[1]
   };
 };
 

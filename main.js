@@ -12,8 +12,6 @@ import {
   parseReservedDomainsText,
   validateReservedDomainsList,
   estimateReservedDomainsCost,
-  getLockV1AdminBadgesManifest,
-  getLockV1UpgradeBadgeManifest,
   getBurnAdminBadgeManifest,
   getComponentInfoManifest,
   validateAdminActionParams,
@@ -54,12 +52,9 @@ let deploymentConfig = {};
 let adminComponentAddress = null;
 let adminBadgeResourceAddress = null;
 let adminDappDefinitionAddress = null;
+let adminDappLockerAddress = null;
 let uploadedDomainsInSession = []; // Track domains uploaded in this session
 let allReservedDomains = []; // All reserved domains from component
-let v1AdminBadgeResource = null; // V1 admin badge resource address
-let v1UpgradeBadgeResource = null; // V1 upgrade badge resource address
-let v1AdminBadgesInWallet = "0"; // Amount in user's wallet
-let v1UpgradeBadgesInWallet = "0"; // Amount in user's wallet
 let currentPage = 1;
 const domainsPerPage = 20;
 let createdResources = null;
@@ -169,8 +164,7 @@ function initializeUIElements() {
     paymentResourcesList: document.getElementById("paymentResourcesList"),
     addPaymentResource: document.getElementById("addPaymentResource"),
     legacyDomainResource: document.getElementById("legacyDomainResource"),
-    v1AdminBadgeResource: document.getElementById("v1AdminBadgeResource"),
-    v1UpgradeBadgeResource: document.getElementById("v1UpgradeBadgeResource"),
+    // V1 badge resources removed - functionality moved to v1-badge-lockers-client
     
     // Resource creation elements
     resourceCreationHelper: document.getElementById("resourceCreationHelper"),
@@ -179,8 +173,6 @@ function initializeUIElements() {
     createdFUSD: document.getElementById("createdFUSD"),
     createdSUSD: document.getElementById("createdSUSD"),
     createdLegacyDomain: document.getElementById("createdLegacyDomain"),
-    createdV1AdminBadge: document.getElementById("createdV1AdminBadge"),
-    createdV1UpgradeBadge: document.getElementById("createdV1UpgradeBadge"),
     useCreatedResources: document.getElementById("useCreatedResources"),
     
     domainIconUrl: document.getElementById("domainIconUrl"),
@@ -230,15 +222,9 @@ function initializeUIElements() {
     reservedDomainsPreview: document.getElementById("reservedDomainsPreview"),
     previewResults: document.getElementById("previewResults"),
     
-    // V1 badge locking
-    lockAdminBadges: document.getElementById("lockAdminBadges"),
-    lockUpgradeBadge: document.getElementById("lockUpgradeBadge"),
-    v1LockStatus: document.getElementById("v1LockStatus"),
-    lockStatusResults: document.getElementById("lockStatusResults"),
-    refreshLockStatus: document.getElementById("refreshLockStatus"),
-    
     // Admin badge management
     burnAdminBadge: document.getElementById("burnAdminBadge"),
+    burnAdminBadgeSection: document.getElementById("burnAdminBadgeSection"),
     burnWarningSection: document.getElementById("burnWarningSection"),
     burnCompletionMessage: document.getElementById("burnCompletionMessage"),
     
@@ -259,6 +245,7 @@ function initializeUIElements() {
     dappIconUrl: document.getElementById("dappIconUrl"),
     dappTags: document.getElementById("dappTags"),
     dappWebsites: document.getElementById("dappWebsites"),
+    dappEntities: document.getElementById("dappEntities"),
     discoveredEntities: document.getElementById("discoveredEntities"),
     entitiesList: document.getElementById("entitiesList"),
     previewDappManifest: document.getElementById("previewDappManifest"),
@@ -333,15 +320,9 @@ function initializeNetworkDefaults() {
     });
   }
   
-  // Legacy and V1 resources
+  // Legacy domain resource (V1 badge resources moved to v1-badge-lockers-client)
   if (elements.legacyDomainResource) {
     elements.legacyDomainResource.placeholder = defaults.placeholders.legacyDomainResource;
-  }
-  if (elements.v1AdminBadgeResource) {
-    elements.v1AdminBadgeResource.placeholder = defaults.placeholders.v1AdminBadgeResource;
-  }
-  if (elements.v1UpgradeBadgeResource) {
-    elements.v1UpgradeBadgeResource.placeholder = defaults.placeholders.v1UpgradeBadgeResource;
   }
   
   // Component addresses (Admin and Management panels)
@@ -488,7 +469,7 @@ function goToAdminStep(step) {
     });
     
     // Update step visibility atomically - all changes in single pass
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 3; i++) {
       const stepEl = document.getElementById(`adminStep${i}`);
       if (stepEl) {
         const isActive = (i === step);
@@ -513,8 +494,7 @@ function goToAdminStep(step) {
   if (adminComponentAddress) {
     const displays = [
       document.getElementById('adminComponentDisplay'),
-      document.getElementById('adminComponentDisplay3'),
-      document.getElementById('adminComponentDisplay4')
+      document.getElementById('adminComponentDisplay3')
     ];
     
     displays.forEach(display => {
@@ -529,7 +509,7 @@ function goToAdminStep(step) {
 }
 
 function nextAdminStep() {
-  if (currentAdminStep < 4) {
+  if (currentAdminStep < 3) {
     goToAdminStep(currentAdminStep + 1);
   }
 }
@@ -612,21 +592,10 @@ function validateStep3() {
     .filter(value => value);
   
   const legacyDomain = elements.legacyDomainResource.value.trim();
-  const v1AdminBadge = elements.v1AdminBadgeResource.value.trim();
-  const v1UpgradeBadge = elements.v1UpgradeBadgeResource.value.trim();
+  // V1 badge resources removed - functionality moved to v1-badge-lockers-client
   
   if (!legacyDomain) {
     showError("Legacy domain resource address is required");
-    return false;
-  }
-  
-  if (!v1AdminBadge) {
-    showError("V1 admin badge resource address is required");
-    return false;
-  }
-  
-  if (!v1UpgradeBadge) {
-    showError("V1 upgrade badge resource address is required");
     return false;
   }
   
@@ -685,11 +654,9 @@ function validateStep3() {
   const dappDefinitionDescription = componentDescription;
   const dappDefinitionInfoUrl = componentInfoUrl;
   
-  // Save all config
+  // Save all config (V1 badge resources removed - moved to v1-badge-lockers-client)
   deploymentConfig.paymentResources = paymentResources;
   deploymentConfig.legacyDomainResource = legacyDomain;
-  deploymentConfig.v1AdminBadgeResource = v1AdminBadge;
-  deploymentConfig.v1UpgradeBadgeResource = v1UpgradeBadge;
   deploymentConfig.domainIconUrl = domainIconUrl;
   deploymentConfig.adminBadgeIconUrl = adminBadgeIconUrl;
   deploymentConfig.configBadgeIconUrl = configBadgeIconUrl;
@@ -754,10 +721,10 @@ function updateNetworkConfiguration() {
   if (consoleLink) {
     if (currentNetwork === "mainnet") {
       consoleLink.href = "https://console.radixdlt.com/deploy-package";
-      consoleLink.textContent = "📱 Open Mainnet Developer Console";
+      consoleLink.textContent = "ðŸ“± Open Mainnet Developer Console";
     } else {
       consoleLink.href = "https://stokenet-console.radixdlt.com/deploy-package";
-      consoleLink.textContent = "📱 Open Stokenet Developer Console";
+      consoleLink.textContent = "ðŸ“± Open Stokenet Developer Console";
     }
   }
   
@@ -773,8 +740,6 @@ function updateConfigSummary() {
     <div class="config-item"><strong>Package:</strong> ${deploymentConfig.packageAddress || "Package not specified"}</div>
     <div class="config-item"><strong>Payment Resources:</strong> ${(deploymentConfig.paymentResources || []).length} configured</div>
     <div class="config-item"><strong>Legacy Domain Resource:</strong> ${deploymentConfig.legacyDomainResource || "Not specified"}</div>
-    <div class="config-item"><strong>V1 Admin Badge Resource:</strong> ${deploymentConfig.v1AdminBadgeResource || "Not specified"}</div>
-    <div class="config-item"><strong>V1 Upgrade Badge Resource:</strong> ${deploymentConfig.v1UpgradeBadgeResource || "Not specified"}</div>
     <div class="config-item"><strong>Domain Icon URL:</strong> ${deploymentConfig.domainIconUrl || "Not specified"}</div>
     <div class="config-item"><strong>Admin Badge Icon URL:</strong> ${deploymentConfig.adminBadgeIconUrl || "Not specified"}</div>
     <div class="config-item"><strong>Config Badge Icon URL:</strong> ${deploymentConfig.configBadgeIconUrl || "Not specified"}</div>
@@ -1005,7 +970,7 @@ function showPackageDeploymentInstructions() {
   
   const html = `
     <div class="package-deployment-help">
-      <div class="info-icon">📦</div>
+      <div class="info-icon">ðŸ“¦</div>
       <h3>Package Deployment Required</h3>
       <p>Before deploying the RNS V2 component, you need to deploy the package code first.</p>
       
@@ -1018,7 +983,7 @@ function showPackageDeploymentInstructions() {
       
       <div class="console-link">
         <a href="${instructions.consoleUrl}" target="_blank" class="btn btn-primary">
-          📱 Open ${currentNetwork === 'mainnet' ? 'Mainnet' : 'Stokenet'} Developer Console
+          ðŸ“± Open ${currentNetwork === 'mainnet' ? 'Mainnet' : 'Stokenet'} Developer Console
         </a>
       </div>
             
@@ -1136,6 +1101,20 @@ async function loadAdminComponent() {
         const dappDefMetadata = componentDetails.metadata.items.find(item => item.key === 'dapp_definition');
         if (dappDefMetadata && dappDefMetadata.value?.typed?.value) {
           adminDappDefinitionAddress = dappDefMetadata.value.typed.value;
+          
+          // Fetch dApp Locker address from dApp definition account metadata
+          try {
+            const dappDefDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(adminDappDefinitionAddress);
+            if (dappDefDetails?.metadata?.items) {
+              const lockerMetadata = dappDefDetails.metadata.items.find(item => item.key === 'account_locker');
+              if (lockerMetadata && lockerMetadata.value?.typed?.value) {
+                adminDappLockerAddress = lockerMetadata.value.typed.value;
+              }
+            }
+          } catch (lockerError) {
+            console.warn("⚠️ Could not fetch dApp Locker address:", lockerError);
+            // Non-critical, continue without it
+          }
         }
       }
     } catch (error) {
@@ -1210,6 +1189,21 @@ async function loadAdminComponent() {
       });
     }
     
+    // Update dApp Locker address displays if it was found
+    if (adminDappLockerAddress) {
+      const lockerDisplays = [
+        document.getElementById('adminDappLockerDisplay'),
+        document.getElementById('adminDappLockerDisplay3')
+      ];
+      
+      lockerDisplays.forEach(display => {
+        if (display) {
+          display.textContent = adminDappLockerAddress;
+          display.parentElement.classList.remove('hidden');
+        }
+      });
+    }
+    
     // Show the component info sections
     const adminComponentInfo = document.getElementById('adminComponentInfo');
     if (adminComponentInfo) {
@@ -1220,9 +1214,6 @@ async function loadAdminComponent() {
     goToAdminStep(2);
 
     hideTransactionModal();
-
-      // Load V1 lock status
-      await refreshV1LockStatus();
 
       // Check completion status of all admin actions
       await checkAdminCompletionStatus();
@@ -1248,25 +1239,6 @@ function disableAdminOnlyActions() {
   if (elements.previewReservedDomains) elements.previewReservedDomains.disabled = true;
   if (elements.uploadReservedDomains) elements.uploadReservedDomains.disabled = true;
   if (elements.reservedDomainsText) elements.reservedDomainsText.disabled = true;
-  
-  // V1 Badge Locking Sections
-  const lockSections = [
-    elements.lockAdminBadges?.closest('.form-section'),
-    elements.lockUpgradeBadge?.closest('.form-section')
-  ];
-  
-  lockSections.forEach(section => {
-    if (section) {
-      section.classList.add('section-disabled');
-      const heading = section.querySelector('h3');
-      if (heading && !heading.querySelector('.badge-status')) {
-        heading.innerHTML += ' <span class="badge-status" style="color: #999; font-size: 14px; font-weight: normal;">(No longer accessible - admin badge burned)</span>';
-      }
-    }
-  });
-  
-  if (elements.lockAdminBadges) elements.lockAdminBadges.disabled = true;
-  if (elements.lockUpgradeBadge) elements.lockUpgradeBadge.disabled = true;
 }
 
 // Check completion status of admin actions and update UI accordingly
@@ -1302,19 +1274,18 @@ async function checkAdminCompletionStatus() {
       }
     }
     
-    // 3. V1 lock status is already loaded via refreshV1LockStatus()
-    // We can check the global v1AdminBadgesLocked and v1UpgradeBadgesLocked
-    
-    // 4. Update UI based on status
+    // Update UI based on status
     
     // If admin badge has been burned, disable all admin-only actions
     if (!hasAdminBadge) {
       disableAdminOnlyActions();
-      
-      // Show badge burn completion message
-      if (elements.burnWarningSection) {
-        elements.burnWarningSection.classList.add("hidden");
+
+      // Make the burn section semi-opaque to indicate it's complete
+      if (elements.burnAdminBadgeSection) {
+        elements.burnAdminBadgeSection.classList.add("section-disabled");
       }
+      
+      // Show badge burn completion message (now outside the danger zone)
       if (elements.burnCompletionMessage) {
         elements.burnCompletionMessage.classList.remove("hidden");
       }
@@ -1598,7 +1569,7 @@ async function lookupReservedDomain() {
         // No entry found - domain is not reserved
         detailsDiv.innerHTML = `
           <div class="info-message">
-            <strong>ℹ️ Domain Not Reserved</strong>
+            <strong>ℹ️ Domain Not Reserved</strong>
             <p>The domain <strong>${domain}</strong> is not currently reserved and can be registered by anyone.</p>
           </div>
         `;
@@ -1675,7 +1646,7 @@ async function loadAllReservedDomains() {
     if (allKeys.length === 0) {
       document.getElementById("allDomainsStats").innerHTML = `
         <div class="info-message">
-          <strong>ℹ️ No Reserved Domains</strong>
+          <strong>ℹ️ No Reserved Domains</strong>
           <p>There are currently no reserved domains in this component.</p>
         </div>
       `;
@@ -1713,7 +1684,7 @@ async function loadAllReservedDomains() {
     // Display stats
     document.getElementById("allDomainsStats").innerHTML = `
       <div class="success-message">
-        <strong>✅ Loaded ${allReservedDomains.length} Reserved Domains</strong>
+        <strong>Loaded ${allReservedDomains.length} Reserved Domains</strong>
       </div>
     `;
     
@@ -1774,429 +1745,11 @@ function goToNextPage() {
   }
 }
 
-// ********** V1 Badge Locking **********
-async function lockV1AdminBadges() {
-  // Use auto-detected amount from wallet
-  const amount = v1AdminBadgesInWallet;
-  
-  if (!amount || amount === "0" || parseFloat(amount) < 1) {
-    showError("No V1 admin badges found in your wallet. Please ensure you have badges to lock.");
-    return;
-  }
-  
-  if (!account || !adminComponentAddress) {
-    showError("Please connect wallet and load component first");
-    return;
-  }
-  
-  if (!v1AdminBadgeResource) {
-    showError("V1 admin badge resource not found. Please refresh status.");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Checking admin badge...");
-    
-    // Check if user has V2 admin badge in wallet (required for this action)
-    const adminBadgeResource = adminBadgeResourceAddress || deploymentConfig.adminBadgeResource;
-    if (adminBadgeResource) {
-      const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
-      const adminBadgesInWallet = accountDetails.fungible_resources?.items?.find(
-        r => r.resource_address === adminBadgeResource
-      )?.vaults?.items?.[0]?.amount || 0;
-      
-      if (parseFloat(adminBadgesInWallet) === 0) {
-        hideTransactionModal();
-        showError("❌ You do not have the admin badge in your wallet. This action requires the admin badge, which may have been burned.");
-        disableAdminOnlyActions();
-        return;
-      }
-    }
-    
-    showTransactionModal(`Locking ${amount} V1 admin badges from wallet...`);
-    
-    const manifest = getLockV1AdminBadgesManifest({
-      componentAddress: adminComponentAddress,
-      v1AdminBadgeResource: v1AdminBadgeResource,
-      badgeAmount: amount,
-      accountAddress: account.address,
-      networkId: currentNetwork
-    });
-    
-    const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    });
-    
-    if (result.isErr()) {
-      throw new Error(result.error.message || result.error.error || JSON.stringify(result.error));
-    }
-    
-    hideTransactionModal();
-    showSuccess(`Successfully locked ${amount} V1 admin badges!`);
-    
-    // Refresh lock status
-    await refreshV1LockStatus();
-    
-  } catch (error) {
-    console.error("❌ Badge locking error:", error);
-    hideTransactionModal();
-    showError("Badge locking failed: " + (error.message || JSON.stringify(error)));
-  }
-}
-
-async function lockV1UpgradeBadge() {
-  // Use auto-detected amount from wallet
-  const amount = v1UpgradeBadgesInWallet;
-  
-  if (!amount || amount === "0" || parseFloat(amount) < 1) {
-    showError("No V1 upgrade badges found in your wallet. Please ensure you have badges to lock.");
-    return;
-  }
-  
-  if (!account || !adminComponentAddress) {
-    showError("Please connect wallet and load component first");
-    return;
-  }
-  
-  if (!v1UpgradeBadgeResource) {
-    showError("V1 upgrade badge resource not found. Please refresh status.");
-    return;
-  }
-  
-  try {
-    showTransactionModal("Checking admin badge...");
-    
-    // Check if user has V2 admin badge in wallet (required for this action)
-    const adminBadgeResource = adminBadgeResourceAddress || deploymentConfig.adminBadgeResource;
-    if (adminBadgeResource) {
-      const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
-      const adminBadgesInWallet = accountDetails.fungible_resources?.items?.find(
-        r => r.resource_address === adminBadgeResource
-      )?.vaults?.items?.[0]?.amount || 0;
-      
-      if (parseFloat(adminBadgesInWallet) === 0) {
-        hideTransactionModal();
-        showError("❌ You do not have the admin badge in your wallet. This action requires the admin badge, which may have been burned.");
-        disableAdminOnlyActions();
-        return;
-      }
-    }
-    
-    showTransactionModal(`Locking ${amount} V1 upgrade badges from wallet...`);
-    
-    const manifest = getLockV1UpgradeBadgeManifest({
-      componentAddress: adminComponentAddress,
-      v1UpgradeBadgeResource: v1UpgradeBadgeResource,
-      badgeAmount: amount,
-      accountAddress: account.address,
-      networkId: currentNetwork
-    });
-    
-    const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: manifest,
-      version: 1,
-    });
-    
-    if (result.isErr()) {
-      throw new Error(result.error.message || result.error.error || JSON.stringify(result.error));
-    }
-    
-    hideTransactionModal();
-    showSuccess(`Successfully locked ${amount} V1 upgrade badges!`);
-    
-    // Refresh lock status
-    await refreshV1LockStatus();
-    
-  } catch (error) {
-    console.error("❌ Badge locking error:", error);
-    hideTransactionModal();
-    showError("Badge locking failed: " + (error.message || JSON.stringify(error)));
-  }
-}
-
-async function refreshV1LockStatus() {
-  if (!adminComponentAddress) {
-    return;
-  }
-  
-  try {
-    // Query the component state to get V1 vault amounts
-    const componentDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(adminComponentAddress);
-    
-    if (!componentDetails?.details?.state?.fields) {
-      throw new Error("Could not access component state");
-    }
-    
-    
-    // Find the V1 vaults in component state
-    const fields = componentDetails.details.state.fields;
-    let adminBadgesLocked = "0";
-    let upgradeBadgesLocked = "0";
-    let adminBadgeResource = null;
-    let upgradeBadgeResource = null;
-    
-    // Find v1_admin_badge_resource_address and v1_service_upgrade_badge_resource_address
-    for (const field of fields) {
-      if (field.field_name === 'v1_admin_badge_resource_address' && field.type_name === 'ResourceAddress') {
-        adminBadgeResource = field.value;
-      }
-      if (field.field_name === 'v1_service_upgrade_badge_resource_address' && field.type_name === 'ResourceAddress') {
-        upgradeBadgeResource = field.value;
-      }
-    }
-    
-    
-    // Find the vaults that hold these badges
-    if (componentDetails.fungible_resources?.items) {
-      for (const resource of componentDetails.fungible_resources.items) {
-        if (resource.resource_address === adminBadgeResource && resource.vaults?.items?.length > 0) {
-          adminBadgesLocked = resource.vaults.items[0].amount || "0";
-        }
-        if (resource.resource_address === upgradeBadgeResource && resource.vaults?.items?.length > 0) {
-          upgradeBadgesLocked = resource.vaults.items[0].amount || "0";
-        }
-      }
-    }
-    
-    // Query resource details to get total supply
-    let adminBadgeTotalSupply = "0";
-    let upgradeBadgeTotalSupply = "0";
-    
-    if (adminBadgeResource) {
-      try {
-        const adminResourceDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(adminBadgeResource);
-        
-        // The total supply is in the details for fungible resources
-        if (adminResourceDetails.details?.total_supply) {
-          adminBadgeTotalSupply = adminResourceDetails.details.total_supply;
-        } else if (adminResourceDetails.fungible_resources?.total_supply) {
-          adminBadgeTotalSupply = adminResourceDetails.fungible_resources.total_supply;
-        }
-        
-      } catch (e) {
-        console.error("Failed to get admin badge supply:", e);
-      }
-    }
-    
-    if (upgradeBadgeResource) {
-      try {
-        const upgradeResourceDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(upgradeBadgeResource);
-        
-        // The total supply is in the details for fungible resources
-        if (upgradeResourceDetails.details?.total_supply) {
-          upgradeBadgeTotalSupply = upgradeResourceDetails.details.total_supply;
-        } else if (upgradeResourceDetails.fungible_resources?.total_supply) {
-          upgradeBadgeTotalSupply = upgradeResourceDetails.fungible_resources.total_supply;
-        }
-        
-      } catch (e) {
-        console.error("Failed to get upgrade badge supply:", e);
-      }
-    }
-    
-    // Store resource addresses globally
-    v1AdminBadgeResource = adminBadgeResource;
-    v1UpgradeBadgeResource = upgradeBadgeResource;
-    
-    // Query user's wallet to get badge amounts
-    v1AdminBadgesInWallet = "0";
-    v1UpgradeBadgesInWallet = "0";
-    
-    if (account && adminBadgeResource) {
-      try {
-        const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
-        
-        // Find the admin badge resource in the user's account
-        if (accountDetails.fungible_resources?.items) {
-          const adminBadgeItem = accountDetails.fungible_resources.items.find(
-            item => item.resource_address === adminBadgeResource
-          );
-          if (adminBadgeItem && adminBadgeItem.vaults?.items?.length > 0) {
-            v1AdminBadgesInWallet = adminBadgeItem.vaults.items[0].amount || "0";
-          }
-        }
-      } catch (e) {
-        console.error("Failed to get admin badges from wallet:", e);
-      }
-    }
-    
-    if (account && upgradeBadgeResource) {
-      try {
-        const accountDetails = await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
-        
-        // Find the upgrade badge resource in the user's account
-        if (accountDetails.fungible_resources?.items) {
-          const upgradeBadgeItem = accountDetails.fungible_resources.items.find(
-            item => item.resource_address === upgradeBadgeResource
-          );
-          if (upgradeBadgeItem && upgradeBadgeItem.vaults?.items?.length > 0) {
-            v1UpgradeBadgesInWallet = upgradeBadgeItem.vaults.items[0].amount || "0";
-          }
-        }
-      } catch (e) {
-        console.error("Failed to get upgrade badges from wallet:", e);
-      }
-    }
-    
-    // Calculate remaining badges
-    const adminBadgesRemaining = parseFloat(adminBadgeTotalSupply) - parseFloat(adminBadgesLocked);
-    const upgradeBadgesRemaining = parseFloat(upgradeBadgeTotalSupply) - parseFloat(upgradeBadgesLocked);
-    
-    // Display admin badge status in its section
-    const adminBadgeStatusDiv = document.getElementById("adminBadgeStatus");
-    const lockAdminBadgesBtn = document.getElementById("lockAdminBadges");
-    
-    if (adminBadgeStatusDiv) {
-      const allAdminBadgesLocked = adminBadgesRemaining === 0 && parseFloat(adminBadgeTotalSupply) > 0;
-      const hasAdminBadgesInWallet = parseFloat(v1AdminBadgesInWallet) > 0;
-      
-      if (allAdminBadgesLocked) {
-        // All badges are locked - show completion message
-        adminBadgeStatusDiv.innerHTML = `
-          <div class="status-item success-item">
-            <strong>✅ All Admin Badges Locked</strong>
-            <p style="margin: 8px 0 0 0;">All ${adminBadgeTotalSupply} V1 admin badges have been successfully locked in the component.</p>
-          </div>
-          ${adminBadgeResource ? `
-          <div class="status-item">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <strong style="min-width: 80px;">Resource:</strong>
-              <span class="address-value" style="flex: 1; font-size: 0.85rem;">${adminBadgeResource}</span>
-              <button class="btn-copy" onclick="navigator.clipboard.writeText('${adminBadgeResource}')">Copy</button>
-            </div>
-          </div>
-          ` : ''}
-        `;
-        // Hide the lock button
-        if (lockAdminBadgesBtn) lockAdminBadgesBtn.style.display = 'none';
-      } else {
-        // Badges remaining - show status and button
-        adminBadgeStatusDiv.innerHTML = `
-          <div class="status-item">
-            <strong>Total Supply:</strong> ${adminBadgeTotalSupply}
-          </div>
-          <div class="status-item">
-            <strong>Locked in Component:</strong> ${adminBadgesLocked}
-          </div>
-          <div class="status-item">
-            <strong>Remaining to Lock:</strong> ${adminBadgesRemaining} ⚠️
-          </div>
-          <div class="status-item">
-            <strong>In Your Wallet:</strong> ${v1AdminBadgesInWallet}
-            ${hasAdminBadgesInWallet ? ' 🔓' : ''}
-          </div>
-          ${adminBadgeResource ? `
-          <div class="status-item">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <strong style="min-width: 80px;">Resource:</strong>
-              <span class="address-value" style="flex: 1; font-size: 0.85rem;">${adminBadgeResource}</span>
-              <button class="btn-copy" onclick="navigator.clipboard.writeText('${adminBadgeResource}')">Copy</button>
-            </div>
-          </div>
-          ` : ''}
-        `;
-        // Show the lock button
-        if (lockAdminBadgesBtn) lockAdminBadgesBtn.style.display = 'block';
-      }
-    }
-    
-    // Display upgrade badge status in its section
-    const upgradeBadgeStatusDiv = document.getElementById("upgradeBadgeStatus");
-    const lockUpgradeBadgeBtn = document.getElementById("lockUpgradeBadge");
-    
-    if (upgradeBadgeStatusDiv) {
-      const allUpgradeBadgesLocked = upgradeBadgesRemaining === 0 && parseFloat(upgradeBadgeTotalSupply) > 0;
-      const hasUpgradeBadgesInWallet = parseFloat(v1UpgradeBadgesInWallet) > 0;
-      
-      if (allUpgradeBadgesLocked) {
-        // All badges are locked - show completion message
-        upgradeBadgeStatusDiv.innerHTML = `
-          <div class="status-item success-item">
-            <strong>✅ All Upgrade Badges Locked</strong>
-            <p style="margin: 8px 0 0 0;">All ${upgradeBadgeTotalSupply} V1 upgrade badges have been successfully locked in the component.</p>
-          </div>
-          ${upgradeBadgeResource ? `
-          <div class="status-item">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <strong style="min-width: 80px;">Resource:</strong>
-              <span class="address-value" style="flex: 1; font-size: 0.85rem;">${upgradeBadgeResource}</span>
-              <button class="btn-copy" onclick="navigator.clipboard.writeText('${upgradeBadgeResource}')">Copy</button>
-            </div>
-          </div>
-          ` : ''}
-        `;
-        // Hide the lock button
-        if (lockUpgradeBadgeBtn) lockUpgradeBadgeBtn.style.display = 'none';
-      } else {
-        // Badges remaining - show status and button
-        upgradeBadgeStatusDiv.innerHTML = `
-          <div class="status-item">
-            <strong>Total Supply:</strong> ${upgradeBadgeTotalSupply}
-          </div>
-          <div class="status-item">
-            <strong>Locked in Component:</strong> ${upgradeBadgesLocked}
-          </div>
-          <div class="status-item">
-            <strong>Remaining to Lock:</strong> ${upgradeBadgesRemaining} ⚠️
-          </div>
-          <div class="status-item">
-            <strong>In Your Wallet:</strong> ${v1UpgradeBadgesInWallet}
-            ${hasUpgradeBadgesInWallet ? ' 🔓' : ''}
-          </div>
-          ${upgradeBadgeResource ? `
-          <div class="status-item">
-            <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
-              <strong style="min-width: 80px;">Resource:</strong>
-              <span class="address-value" style="flex: 1; font-size: 0.85rem;">${upgradeBadgeResource}</span>
-              <button class="btn-copy" onclick="navigator.clipboard.writeText('${upgradeBadgeResource}')">Copy</button>
-            </div>
-          </div>
-          ` : ''}
-        `;
-        // Show the lock button
-        if (lockUpgradeBadgeBtn) lockUpgradeBadgeBtn.style.display = 'block';
-      }
-    }
-    
-    // Display overall summary
-    const allBadgesLocked = adminBadgesRemaining === 0 && upgradeBadgesRemaining === 0 && 
-                           parseFloat(adminBadgeTotalSupply) > 0 && parseFloat(upgradeBadgeTotalSupply) > 0;
-    
-    elements.lockStatusResults.innerHTML = `
-      <div class="status-item ${allBadgesLocked ? 'success-item' : 'warning-item'}">
-        <strong>${allBadgesLocked ? '✅ Ready for Launch' : '⚠️ Badges Still Need Locking'}</strong>
-        <p style="margin: 8px 0 0 0; color: ${allBadgesLocked ? '#166534' : '#92400e'};">
-          ${allBadgesLocked 
-            ? 'All V1 badges are locked. The RNS V2 system is ready for public launch.'
-            : 'Some V1 badges remain unlocked. Lock all badges before activating public registration.'}
-        </p>
-      </div>
-      <div class="status-item">
-        <strong>Admin Badges:</strong> ${adminBadgesLocked} / ${adminBadgeTotalSupply} locked
-        ${adminBadgesRemaining === 0 && parseFloat(adminBadgeTotalSupply) > 0 ? ' ✅' : ''}
-      </div>
-      <div class="status-item">
-        <strong>Upgrade Badges:</strong> ${upgradeBadgesLocked} / ${upgradeBadgeTotalSupply} locked
-        ${upgradeBadgesRemaining === 0 && parseFloat(upgradeBadgeTotalSupply) > 0 ? ' ✅' : ''}
-      </div>
-    `;
-    
-    
-  } catch (error) {
-    console.error("Failed to refresh lock status:", error);
-    elements.lockStatusResults.innerHTML = `
-      <div class="error-message">
-        <strong>❌ Failed to load lock status</strong>
-        <p>${error.message}</p>
-      </div>
-    `;
-  }
-}
+// V1 Badge Locking functionality has been moved to v1-badge-lockers-client (separate project)
 
 // ********** Admin Badge Management **********
 async function burnAdminBadge() {
-  if (!confirm("⚠️ WARNING: This will permanently burn the admin badge and activate public domain registration. This action cannot be undone. Are you sure?")) {
+  if (!confirm("WARNING: This will permanently burn the admin badge and activate public domain registration. This action cannot be undone. Are you sure?")) {
     return;
   }
   
@@ -2233,15 +1786,17 @@ async function burnAdminBadge() {
     
     hideTransactionModal();
     showSuccess("Admin badge burned successfully! Public domain registration is now active.");
-    
-    // Hide the burn button and warning, show completion message
-    if (elements.burnWarningSection) {
-      elements.burnWarningSection.classList.add("hidden");
+
+    // Make the burn section semi-opaque to indicate it's complete
+    if (elements.burnAdminBadgeSection) {
+      elements.burnAdminBadgeSection.classList.add("section-disabled");
     }
+    
+    // Show completion message (now outside the danger zone)
     if (elements.burnCompletionMessage) {
       elements.burnCompletionMessage.classList.remove("hidden");
     }
-    
+
     // Disable all admin-only actions since badge is now burned
     disableAdminOnlyActions();
     
@@ -2346,12 +1901,10 @@ function showResourceCreationSuccess(receipt) {
     // Parse the created resources from the receipt
     createdResources = parseResourceCreationReceipt(receipt);
 
-    // Display the resource addresses
+    // Display the resource addresses (Core V2 resources only - V1 badges moved to separate project)
     elements.createdFUSD.textContent = createdResources.fUSD;
     elements.createdSUSD.textContent = createdResources.sUSD;
     elements.createdLegacyDomain.textContent = createdResources.legacyDomainResource;
-    elements.createdV1AdminBadge.textContent = createdResources.v1AdminBadgeResource;
-    elements.createdV1UpgradeBadge.textContent = createdResources.v1UpgradeBadgeResource;
 
     // Show results section
     elements.resourceCreationResults.classList.remove("hidden");
@@ -2386,10 +1939,8 @@ function useCreatedResourcesInForm() {
       newInputs[1].value = createdResources.sUSD;
     }
 
-    // Fill legacy and V1 resources
+    // Fill legacy domain resource (V1 badge resources moved to v1-badge-lockers-client)
     elements.legacyDomainResource.value = createdResources.legacyDomainResource;
-    elements.v1AdminBadgeResource.value = createdResources.v1AdminBadgeResource;
-    elements.v1UpgradeBadgeResource.value = createdResources.v1UpgradeBadgeResource;
 
     showSuccess("Forms auto-filled with created resource addresses!");
 
@@ -2487,8 +2038,6 @@ function backToModeSelection() {
   if (elements.previewReservedDomains) elements.previewReservedDomains.disabled = false;
   if (elements.uploadReservedDomains) elements.uploadReservedDomains.disabled = false;
   if (elements.reservedDomainsText) elements.reservedDomainsText.disabled = false;
-  if (elements.lockAdminBadges) elements.lockAdminBadges.disabled = false;
-  if (elements.lockUpgradeBadge) elements.lockUpgradeBadge.disabled = false;
   
   // Reset management panel internal elements to default state
   if (elements.manageWalletGate) {
@@ -2931,11 +2480,6 @@ function displayDiscoveredEntities(entities) {
 
 async function previewDappManifest() {
   try {
-    if (!loadedToolsComponentAddress) {
-      showError("Please load a component first using the 'Load Component' button");
-      return;
-    }
-    
     // Get input values
     const dappAccountAddress = elements.dappAccountAddress.value.trim();
     const name = elements.dappName.value.trim();
@@ -2943,6 +2487,7 @@ async function previewDappManifest() {
     const iconUrl = elements.dappIconUrl.value.trim();
     const tagsText = elements.dappTags.value.trim();
     const websitesText = elements.dappWebsites.value.trim();
+    const entitiesText = elements.dappEntities?.value.trim() || '';
     
     // Parse tags (comma-separated)
     const tags = tagsText.split(',')
@@ -2954,12 +2499,14 @@ async function previewDappManifest() {
       .map(line => line.trim())
       .filter(line => line.length > 0);
     
-    showTransactionModal("Discovering entities and generating manifest...");
-    
-    // Auto-discover entities from component
-    const claimedEntities = await discoverEntitiesFromComponent(loadedToolsComponentAddress);
-    
-    hideTransactionModal();
+    // Parse manually entered entities (one per line)
+    const claimedEntities = entitiesText.split('\n')
+      .map(line => line.trim())
+      .filter(line => line.length > 0 && (
+        line.startsWith('component_') || 
+        line.startsWith('package_') || 
+        line.startsWith('resource_')
+      ));
     
     // Validate inputs
     const validation = validateDappDefinitionParams({
@@ -2977,8 +2524,13 @@ async function previewDappManifest() {
       return;
     }
     
-    // Display discovered entities
-    displayDiscoveredEntities(claimedEntities);
+    // Display claimed entities if any
+    if (claimedEntities.length > 0) {
+      displayDiscoveredEntities(claimedEntities);
+      elements.discoveredEntities.classList.remove("hidden");
+    } else {
+      elements.discoveredEntities.classList.add("hidden");
+    }
     
     // Generate manifest (expose currentNetwork to manifest builder)
     window.currentNetwork = currentNetwork;
@@ -2998,7 +2550,14 @@ async function previewDappManifest() {
     elements.dappManifestOutput.classList.remove("hidden");
     elements.dappDefinitionResult.classList.add("hidden");
     
-    showSuccess(`✅ Manifest preview generated! Discovered ${claimedEntities.length} V2 entities.`);
+    // Show appropriate success message
+    if (claimedEntities.length > 0) {
+      showSuccess(`✅ Manifest preview generated with ${claimedEntities.length} claimed entities.`);
+    } else if (claimedWebsites.length > 0) {
+      showSuccess(`✅ Manifest preview generated for website verification (${claimedWebsites.length} website${claimedWebsites.length > 1 ? 's' : ''}).`);
+    } else {
+      showSuccess(`✅ Manifest preview generated. Remember to add your website for mainnet use.`);
+    }
   } catch (error) {
     hideTransactionModal();
     console.error("Error generating dApp manifest:", error);
@@ -3067,6 +2626,7 @@ async function submitDappDefinition() {
       elements.dappIconUrl.value = "";
       elements.dappTags.value = "";
       elements.dappWebsites.value = "";
+      if (elements.dappEntities) elements.dappEntities.value = "";
       generatedDappManifest = null;
       elements.dappManifestOutput.classList.add("hidden");
     } else {
@@ -3535,9 +3095,9 @@ async function loadRegistrarInfo(badgeId) {
           feesHTML += `
             <div class="info-row" style="display: flex; align-items: center; justify-content: space-between; padding: 12px; border: 1px solid #2ecc71; border-radius: 4px; margin-bottom: 8px; background: rgba(46, 204, 113, 0.05);">
               <div style="flex: 1;">
-                <div style="font-weight: bold; margin-bottom: 4px;">💰 Available: ${amount}</div>
+                <div style="font-weight: bold; margin-bottom: 4px;">ðŸ’° Available: ${amount}</div>
                 <div class="address-value" style="font-size: 0.85em; color: #888; margin-bottom: 4px;">${resourceAddress}</div>
-                <div style="font-size: 0.85em; color: #888;">📊 Lifetime domains bonded: ${domainsCount}</div>
+                <div style="font-size: 0.85em; color: #888;">ðŸ“Š Lifetime domains bonded: ${domainsCount}</div>
               </div>
               <button class="btn btn-success" onclick="window.withdrawSpecificFee('${resourceAddress}')">Withdraw</button>
             </div>
@@ -5095,17 +4655,13 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!elements.step4Next) console.error("❌ step4Next element not found");
   else elements.step4Next.onclick = instantiateRNSCore;
   
-  // Admin wizard step navigation (5 steps total)
+  // Admin wizard step navigation (3 steps: Component, Reservations, Activation)
   // Admin step navigation elements
   const adminStep1Back = document.getElementById("adminStep1Back");
   const adminStep2Back = document.getElementById("adminStep2Back");
   const adminStep2Next = document.getElementById("adminStep2Next");
   const adminStep3Back = document.getElementById("adminStep3Back");
-  const adminStep3Next = document.getElementById("adminStep3Next");
-  const adminStep4Back = document.getElementById("adminStep4Back");
-  const adminStep4Next = document.getElementById("adminStep4Next");
-  const adminStep5Back = document.getElementById("adminStep5Back");
-  const adminComplete = document.getElementById("adminComplete");
+          const adminComplete = document.getElementById("adminComplete");
   
   // Back buttons (go back to mode selection from step 1, go back to previous step from others)
   if (adminStep1Back) adminStep1Back.onclick = backToModeFromAdmin;
@@ -5120,12 +4676,8 @@ document.addEventListener("DOMContentLoaded", () => {
   if (adminStep3Back) adminStep3Back.onclick = () => goToAdminStep(2);
   else console.warn("⚠️ adminStep3Back element not found");
   
-  if (adminStep3Next) adminStep3Next.onclick = () => goToAdminStep(4);
-  else console.warn("⚠️ adminStep3Next element not found");
-  
-  if (adminStep4Back) adminStep4Back.onclick = () => goToAdminStep(3);
-  else console.warn("⚠️ adminStep4Back element not found");
-  
+    
+    
   if (adminComplete) adminComplete.onclick = completeAdminSetup;
   else console.warn("⚠️ adminComplete element not found");
   
@@ -5254,16 +4806,6 @@ document.addEventListener("DOMContentLoaded", () => {
   if (nextPageBtn) {
     nextPageBtn.onclick = goToNextPage;
   }
-  
-  // V1 badge locking - with error checking
-  if (!elements.lockAdminBadges) console.error("❌ lockAdminBadges element not found");
-  else elements.lockAdminBadges.onclick = lockV1AdminBadges;
-  
-  if (!elements.lockUpgradeBadge) console.error("❌ lockUpgradeBadge element not found");
-  else elements.lockUpgradeBadge.onclick = lockV1UpgradeBadge;
-  
-  if (!elements.refreshLockStatus) console.error("❌ refreshLockStatus element not found");
-  else elements.refreshLockStatus.onclick = refreshV1LockStatus;
   
   // Admin badge management - with error checking
   if (!elements.burnAdminBadge) console.error("❌ burnAdminBadge element not found");
